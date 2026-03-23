@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Email Copilot</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>AI Email Copilot</h1>
+      <p>Local AI for Gmail productivity</p>
+    </div>
+
+    <div class="status-section">
+      <h2>Ollama Status</h2>
+      <div class="status-indicator">
+        <div id="status-dot" class="dot disconnected"></div>
+        <span id="status-text">Checking...</span>
+      </div>
+      <p class="help-text">Ollama must be running on localhost:11434</p>
+    </div>
+
+    <div class="settings-section">
+      <h2>Settings</h2>
+
+      <div class="setting-item">
+        <label>
+          <input type="checkbox" id="pmbrain-toggle" />
+          <span class="label-text">Enable PM Brain</span>
+        </label>
+        <p class="help-text">
+          Learn from your writing style to personalize replies
+        </p>
+      </div>
+
+      <button id="improve-with-style" class="btn btn-secondary">
+        💡 Improve with My Style
+      </button>
+
+      <div class="memory-stats">
+        <p>
+          <strong>Memory:</strong> <span id="emails-count">0</span> emails,
+          <span id="edits-count">0</span> edits
+        </p>
+      </div>
+
+      <button id="reset-memory" class="btn btn-danger">
+        🗑️ Clear Memory
+      </button>
+    </div>
+
+    <div class="models-section">
+      <h2>Models</h2>
+      <ul>
+        <li>Summarization: <strong>mistral</strong></li>
+        <li>Replies: <strong>llama3</strong></li>
+        <li>Categorization: <strong>mistral</strong></li>
+        <li>Action Items: <strong>mistral</strong></li>
+        <li>PM Brain: <strong>mixtral</strong></li>
+      </ul>
+    </div>
+
+    <div class="help-section">
+      <h2>Quick Start</h2>
+      <ol>
+        <li>Make sure Ollama is running: <code>ollama run llama3</code></li>
+        <li>Open a Gmail thread</li>
+        <li>Click the buttons in the toolbar to analyze</li>
+        <li>Copy results or insert into your reply</li>
+      </ol>
+    </div>
+
+    <div class="footer">
+      <p>v1.0.0 • All processing is local • No data sent to external APIs</p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
