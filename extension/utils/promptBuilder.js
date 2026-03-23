@@ -111,6 +111,21 @@ Guidelines:
 Provide only the reply text, no other formatting.`;
 }
 
+function buildRefineReplyPrompt(originalReply, feedback, threadContext) {
+  return `You are a product manager assistant. You previously drafted an email reply, and the user wants changes.
+
+Original reply you drafted:
+${originalReply}
+
+User's feedback:
+${feedback}
+
+${threadContext ? `Original email thread for context:\n${threadContext}\n` : ""}
+Rewrite the reply incorporating the user's feedback. Keep the same general intent but apply the requested changes.
+
+Provide only the updated reply text, no other formatting or explanation.`;
+}
+
 /**
  * Parse JSON from model response with error handling
  * @param {string} response - Raw model response

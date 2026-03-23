@@ -25,17 +25,30 @@ function checkOllamaStatus() {
   chrome.runtime.sendMessage({ action: "CHECK_OLLAMA" }, (response) => {
     const dot = document.getElementById("status-dot");
     const text = document.getElementById("status-text");
+    const hint = document.getElementById("status-hint");
 
     if (response && response.connected) {
-      dot.classList.remove("disconnected");
+      dot.classList.remove("disconnected", "warning");
       dot.classList.add("connected");
-      text.textContent = "Connected ✓";
+      text.textContent = "Connected";
       text.style.color = "#16a34a";
+      if (hint) hint.textContent = "";
+    } else if (response && response.error === "origins") {
+      dot.classList.remove("connected", "disconnected");
+      dot.classList.add("warning");
+      text.textContent = "Blocked (CORS)";
+      text.style.color = "#d97706";
+      if (hint) {
+        hint.innerHTML =
+          'Ollama is running but blocking the extension.<br>' +
+          'Restart with: <code>OLLAMA_ORIGINS="*" ollama serve</code>';
+      }
     } else {
-      dot.classList.remove("connected");
+      dot.classList.remove("connected", "warning");
       dot.classList.add("disconnected");
-      text.textContent = "Disconnected ✗";
+      text.textContent = "Disconnected";
       text.style.color = "#dc2626";
+      if (hint) hint.textContent = "Run: ollama serve";
     }
   });
 }

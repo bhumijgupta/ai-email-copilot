@@ -3,6 +3,12 @@
  * Handles message routing and Ollama API calls
  */
 
+importScripts(
+  "utils/ollamaClient.js",
+  "utils/promptBuilder.js",
+  "utils/storage.js"
+);
+
 // Model configuration
 const MODELS = {
   SUMMARY: "mistral",
@@ -42,6 +48,14 @@ async function handleMessage(request, sender, sendResponse) {
 
       case "PM_BRAIN_REPLY":
         await handlePMBrainReply(request, sendResponse);
+        break;
+
+      case "REFINE_REPLY":
+        await handleRefineReply(request, sendResponse);
+        break;
+
+      case "TRAIN_BRAIN":
+        await handleTrainBrain(request, sendResponse);
         break;
 
       case "CHECK_OLLAMA":
@@ -202,14 +216,82 @@ async function handlePMBrainReply(request, sendResponse) {
 }
 
 /**
+ * Handle reply refinement based on user feedback
+ */
+async function handleRefineReply(request, sendResponse) {
+  try {
+    const prompt = buildRefineReplyPrompt(
+      request.originalReply,
+      request.feedback,
+      request.threadContext || ""
+    );
+    const response = await callOllama(prompt, MODELS.REPLY);
+    const refined = response.trim();
+
+    // Save the edit to PM Brain so it learns from corrections
+    try {
+      await saveEditedResponse(request.originalReply, refined);
+    } catch (_) {
+      // Non-critical — don't fail the refinement if storage fails
+    }
+
+    sendResponse({
+      success: true,
+      reply: refined
+    });
+  } catch (error) {
+    sendResponse({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
+/**
+ * Save messages from the current thread to PM Brain memory
+ */
+async function handleTrainBrain(request, sendResponse) {
+  try {
+    const messages = request.messages || [];
+    const subject = request.subject || "Unknown thread";
+    let saved = 0;
+
+    for (const msg of messages) {
+      await savePastEmail({
+        from: msg.sender || "me",
+        to: "",
+        subject,
+        body: msg.body,
+        date: new Date().toISOString()
+      });
+      saved++;
+    }
+
+    const stats = await getMemoryStats();
+
+    sendResponse({
+      success: true,
+      savedCount: saved,
+      totalEmails: stats.emailsStored
+    });
+  } catch (error) {
+    sendResponse({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
+/**
  * Check Ollama connection status
  */
 async function handleCheckOllama(sendResponse) {
   try {
-    const status = await checkOllamaStatus();
+    const result = await checkOllamaStatus();
     sendResponse({
       success: true,
-      connected: status
+      connected: result.ok,
+      error: result.error
     });
   } catch (error) {
     sendResponse({

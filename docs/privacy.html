@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — AI Email Copilot</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #1f2937;
+      line-height: 1.7;
+      background: #f9fafb;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 48px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    .subtitle { color: #6b7280; font-size: 14px; margin-bottom: 32px; }
+    h2 { font-size: 18px; margin: 28px 0 12px; }
+    p, li { font-size: 15px; margin-bottom: 12px; }
+    ul { padding-left: 24px; margin-bottom: 16px; }
+    li { margin-bottom: 6px; }
+    strong { font-weight: 600; }
+    .highlight {
+      background: #eff6ff;
+      border-left: 3px solid #3b82f6;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Privacy Policy</h1>
+    <p class="subtitle">AI Email Copilot — Chrome Extension<br>Last updated: 23 March 2026</p>
+
+    <div class="highlight">
+      <strong>Summary:</strong> AI Email Copilot processes all data locally on your device using Ollama. No email content, personal data, or usage information is ever sent to external servers.
+    </div>
+
+    <h2>1. What This Extension Does</h2>
+    <p>AI Email Copilot is a Chrome extension that enhances Gmail by summarising email threads, generating reply drafts, categorising emails, and extracting action items. All AI processing is performed locally using <a href="https://ollama.ai">Ollama</a>, an open-source local AI inference engine running on your own machine.</p>
+
+    <h2>2. Data We Collect</h2>
+    <p><strong>We do not collect any data.</strong> Specifically:</p>
+    <ul>
+      <li>No personal information is collected</li>
+      <li>No email content is transmitted to any external server</li>
+      <li>No analytics or telemetry data is gathered</li>
+      <li>No cookies or tracking technologies are used</li>
+      <li>No user accounts or authentication are required</li>
+    </ul>
+
+    <h2>3. Data That Stays on Your Device</h2>
+    <p>The extension stores the following data locally in your browser's <code>chrome.storage.local</code>:</p>
+    <ul>
+      <li><strong>PM Brain memory</strong> — Email text you explicitly choose to save for writing style personalisation (up to 50 entries). This data never leaves your browser.</li>
+      <li><strong>Edited responses</strong> — When you refine an AI-generated reply, the before/after versions are saved locally to improve future suggestions (up to 30 entries).</li>
+      <li><strong>Settings</strong> — Your preferences such as whether PM Brain is enabled.</li>
+    </ul>
+    <p>You can delete all stored data at any time from the extension popup by clicking "Clear Memory".</p>
+
+    <h2>4. How Email Content Is Processed</h2>
+    <p>When you click an action button (Summarise, Reply, Categorise, or Actions):</p>
+    <ul>
+      <li>The extension reads the email thread text from the Gmail page DOM</li>
+      <li>The text is sent to <strong>Ollama running on your local machine</strong> (http://localhost:11434)</li>
+      <li>Ollama processes the text using AI models stored on your device</li>
+      <li>The result is displayed in the extension panel</li>
+    </ul>
+    <div class="highlight">
+      <strong>No email content is ever sent to any external server, cloud service, or third party.</strong> The entire pipeline runs on localhost.
+    </div>
+
+    <h2>5. Permissions Used</h2>
+    <ul>
+      <li><strong>activeTab</strong> — To read email content from the Gmail tab when you click an action button</li>
+      <li><strong>scripting</strong> — To inject the floating toolbar and result panel into Gmail pages</li>
+      <li><strong>storage</strong> — To save your preferences and optional PM Brain memory locally</li>
+      <li><strong>host_permissions (localhost:11434)</strong> — To communicate with the Ollama AI server running on your own machine</li>
+    </ul>
+
+    <h2>6. Third-Party Services</h2>
+    <p>This extension does not use any third-party services, APIs, analytics platforms, or advertising networks. The only network communication is with Ollama on your local machine.</p>
+
+    <h2>7. Data Security</h2>
+    <p>Since all data processing occurs locally on your device and no data is transmitted externally, your email content and personal information remain under your control at all times. The extension operates with read-only access to Gmail page content and cannot modify, send, or delete emails.</p>
+
+    <h2>8. Children's Privacy</h2>
+    <p>This extension is not directed at children under 13 and does not knowingly collect any information from children.</p>
+
+    <h2>9. Changes to This Policy</h2>
+    <p>If this privacy policy is updated, the changes will be reflected on this page with an updated date. Significant changes will be communicated through the extension's update notes on the Chrome Web Store.</p>
+
+    <h2>10. Contact</h2>
+    <p>If you have questions about this privacy policy, please open an issue on the project's GitHub repository or contact the developer.</p>
+
+    <div class="footer">
+      <p>AI Email Copilot is open source. This privacy policy applies to version 1.0.0 and above.</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -100,6 +100,64 @@ function insertIntoReply(text) {
 }
 
 /**
+ * Extract individual messages from the thread with sender info.
+ * Returns an array of { sender, senderEmail, body, isMe } objects.
+ *
+ * Gmail marks the logged-in user's messages with data-message-id and
+ * shows "me" or the user's own address in the header.
+ */
+function getIndividualMessages() {
+  const results = [];
+
+  try {
+    // Each top-level message container in a thread
+    // Gmail wraps each message in a div with class "gs"
+    const messageContainers = document.querySelectorAll('[role="main"] .gs');
+
+    // Fallback: just pair up headers and bodies if .gs doesn't match
+    const bodies = document.querySelectorAll(".a3s");
+    if (messageContainers.length === 0 && bodies.length === 0) return results;
+
+    if (messageContainers.length > 0) {
+      messageContainers.forEach(container => {
+        const body = container.querySelector(".a3s");
+        if (!body) return;
+
+        const bodyText = (body.innerText || "").trim();
+        if (!bodyText) return;
+
+        // Sender name — Gmail uses .gD for the sender name span
+        const senderSpan = container.querySelector(".gD, [email]");
+        const senderName = senderSpan
+          ? (senderSpan.getAttribute("name") || senderSpan.innerText || "").trim()
+          : "Unknown";
+        const senderEmail = senderSpan
+          ? (senderSpan.getAttribute("email") || "").trim()
+          : "";
+
+        // Gmail shows "me" as the name for your own sent messages
+        const isMe = senderName.toLowerCase() === "me" ||
+          container.querySelector('.ip') !== null; // .ip = "me" indicator
+
+        results.push({ sender: senderName, senderEmail, body: bodyText, isMe });
+      });
+    } else {
+      // Simpler fallback: just get bodies, no sender detection
+      bodies.forEach(body => {
+        const text = (body.innerText || "").trim();
+        if (text) {
+          results.push({ sender: "Unknown", senderEmail: "", body: text, isMe: false });
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Error extracting individual messages:", error);
+  }
+
+  return results;
+}
+
+/**
  * Find the Gmail toolbar to inject buttons
  * @returns {HTMLElement|null} The toolbar element
  */

@@ -1,253 +1,216 @@
-# AI Email Copilot - Chrome Extension
+# AI Email Copilot
 
-A Chrome Extension (Manifest V3) that enhances Gmail with AI-powered email analysis using **Ollama** running locally on your machine.
+A Chrome Extension that enhances Gmail with AI-powered email analysis — all running **locally via Ollama**. No data ever leaves your machine.
 
 ## Features
 
-- **📋 Thread Summarization** — Extract TL;DR, key decisions, open questions, and action items
-- **✏️ Reply Generation** — Auto-draft professional replies with tone control
-- **🏷️ Categorization** — Classify emails (Bug, Vendor Query, Pricing, Onboarding, Internal, Other)
-- **✓ Action Items** — Extract tasks with owner and priority levels
-- **🧠 PM Brain** — Learn from your writing style to personalize replies (optional)
-
-All AI processing runs **locally via Ollama** — no data sent to external APIs.
+- **Thread Summarization** — TL;DR, key decisions, open questions, and action items
+- **Reply Generation** — Draft professional replies with tone control and iterative refinement
+- **Categorization** — Classify emails (Bug, Vendor Query, Pricing, Onboarding, Internal, etc.)
+- **Action Item Extraction** — Tasks with owner and priority levels
+- **PM Brain** — Learns your writing style from real emails to personalize future replies
+- **Train from Threads** — Feed existing Gmail threads into PM Brain to build your style profile
 
 ## Prerequisites
 
-### 1. Install Ollama
+### Install Ollama
 
-Download and install Ollama from [ollama.ai](https://ollama.ai)
-
-### 2. Start Ollama
-
-Open a terminal and run:
+Download from [ollama.ai](https://ollama.ai), then pull the required models:
 
 ```bash
-ollama pull llama3        # For reply generation
-ollama pull mistral       # For summarization, categorization, actions
-ollama pull mixtral       # For PM Brain (optional)
+ollama pull llama3        # Reply generation
+ollama pull mistral       # Summarization, categorization, actions
+ollama pull mixtral       # PM Brain style matching (optional)
 ```
 
-Then start the Ollama server:
+### Start Ollama with CORS enabled
+
+Chrome extensions require Ollama to accept cross-origin requests:
 
 ```bash
-ollama serve
+OLLAMA_ORIGINS="*" ollama serve
 ```
 
-This runs Ollama on `http://localhost:11434` (required by the extension).
+To make this permanent on macOS:
 
-### 3. Install the Extension
+```bash
+launchctl setenv OLLAMA_ORIGINS "*"
+```
 
-1. Clone or download this repository
+## Install (Development)
+
+1. Clone this repository
 2. Go to `chrome://extensions`
-3. Enable **Developer Mode** (top right toggle)
-4. Click **Load Unpacked**
-5. Select the `extension/` folder from this repo
+3. Enable **Developer Mode** (top-right toggle)
+4. Click **Load Unpacked** and select the `extension/` folder
 
-You should see "AI Email Copilot" installed. The icon will appear in your Chrome toolbar.
+## Install (From Zip)
+
+1. Download the latest release zip
+2. Go to `chrome://extensions`
+3. Enable **Developer Mode**
+4. Drag and drop the `.zip` file onto the page
 
 ## Usage
 
-### Basic Workflow
-
 1. Open any email thread in Gmail
-2. Click the AI Copilot toolbar buttons:
-   - **📋 Summarise** — Get thread summary
-   - **✏️ Reply** — Generate reply draft
-   - **🏷️ Categorise** — Auto-tag the email
-   - **✓ Actions** — Extract action items
+2. A floating action bar appears at the bottom of the screen:
 
-3. A side panel appears with the AI analysis
-4. **Copy** results or **Insert into Reply** to auto-fill the compose box
+   | Button | What it does |
+   |--------|-------------|
+   | **Summarise** | TL;DR, key decisions, open questions, action items |
+   | **Reply** | AI-drafted reply with refinement options |
+   | **Categorise** | Auto-classify the email with confidence score |
+   | **Actions** | Extract action items with owner and priority |
+   | **Train Brain** | Save your messages from this thread to PM Brain |
 
-### PM Brain (Optional)
+3. Results appear in a slide-out panel on the right
+4. **Copy** results or **Insert into Reply** to paste directly into Gmail's compose box
 
-Enable PM Brain in the extension popup to:
-- Learn from your past emails
-- Personalize AI replies to match your writing style
-- Click "Improve with My Style" for style-matched replies
+### Refining Replies
+
+After generating a reply, you can refine it:
+- Type feedback in the input field (e.g., "make it shorter", "mention the Friday deadline")
+- Or click a quick-refine chip (Shorter, More formal, More casual, etc.)
+- Each refinement is saved to PM Brain to improve future suggestions
+
+### Training PM Brain
+
+Click **Train Brain** on any thread to:
+1. See all messages split into "Your messages" and "Others"
+2. Select which messages to save (your messages are pre-selected)
+3. Click **Save to PM Brain** to store them as writing style examples
 
 ## Architecture
 
 ```
-Gmail UI
+Gmail DOM
     ↓
-content.js (injects buttons & panel)
-    ↓ (chrome.runtime.sendMessage)
-background.js (routes requests)
-    ↓ (HTTP POST)
+content.js (floating bar + panel)
+    ↓  chrome.runtime.sendMessage
+background.js (message routing)
+    ↓  HTTP POST
 Ollama (localhost:11434)
     ↓
-Local AI Models (mistral, llama3, mixtral)
+Local AI models
 ```
 
 ### File Structure
 
 ```
 extension/
-├── manifest.json                    # MV3 configuration
-├── background.js                    # Service worker (message routing)
-├── content.js                       # Gmail UI injection & panel rendering
+├── manifest.json               # Manifest V3 configuration
+├── background.js               # Service worker (Ollama routing)
+├── content.js                  # Gmail UI injection & panel
+├── icons/
+│   ├── icon16.png
+│   ├── icon48.png
+│   └── icon128.png
 ├── popup/
-│   ├── popup.html                   # Settings UI
-│   ├── popup.js                     # Settings logic
-│   └── popup.css                    # Settings styling
+│   ├── popup.html              # Extension popup
+│   ├── popup.js                # Settings logic
+│   └── popup.css               # Popup styles
 ├── ui/
-│   └── panel.css                    # Panel styles (included in content.js)
+│   ├── panel.js                # Panel module
+│   └── panel.css               # Panel styles
 └── utils/
-    ├── ollamaClient.js              # Ollama API client
-    ├── promptBuilder.js             # AI prompt templates
-    ├── gmailParser.js               # Gmail DOM parsing
-    └── storage.js                   # PM Brain memory management
+    ├── ollamaClient.js         # Ollama API client
+    ├── promptBuilder.js        # AI prompt templates
+    ├── gmailParser.js          # Gmail DOM parsing
+    └── storage.js              # PM Brain storage
 ```
-
-## Configuration
 
 ### Models
 
-The extension uses these Ollama models by default:
-
 | Task | Model | Why |
 |------|-------|-----|
-| Summarization | `mistral` | Fast, structured extraction |
+| Summarization | `mistral` | Fast structured extraction |
 | Replies | `llama3` | Natural conversational output |
 | Categorization | `mistral` | Quick classification |
 | Action Items | `mistral` | Structured extraction |
 | PM Brain | `mixtral` | Best style matching |
 
-### Change Models
+To change models, edit `MODELS` in `extension/background.js`.
 
-Edit `MODELS` object in `extension/background.js`:
+## Building for Chrome Web Store
 
-```javascript
-const MODELS = {
-  SUMMARY: "llama2",      // Change to another model
-  REPLY: "neural-chat",
-  // ... etc
-};
+```bash
+./build.sh
 ```
 
-Then reload the extension.
+This will:
+1. Validate all required files exist
+2. Copy the extension to `dist/`
+3. Create `dist/ai-email-copilot-v<version>.zip`
 
-### Ollama Connection
+Upload the zip at [Chrome Web Store Developer Console](https://chrome.google.com/webstore/devconsole).
 
-The extension expects Ollama at `http://localhost:11434`. To use a different host:
+### Bumping Version
 
-Edit `OLLAMA_BASE_URL` in `extension/utils/ollamaClient.js`:
+Edit `version` in `extension/manifest.json`, then run `./build.sh` again:
 
-```javascript
-const OLLAMA_BASE_URL = "http://your-custom-host:port";
+```json
+"version": "1.1.0"
 ```
+
+## Privacy
+
+- **All processing is local** — Ollama runs on your machine, nothing is sent to external servers
+- **Read-only Gmail access** — The extension only reads email content from the DOM
+- **No authentication** — No Google OAuth, no API keys, no accounts
+- **No tracking** — Zero analytics, telemetry, or data collection
+- **PM Brain is local** — Writing style examples stored in `chrome.storage.local` only
+- **You control your data** — Clear PM Brain memory anytime from the extension popup
 
 ## Troubleshooting
 
-### "Ollama disconnected" in popup
+### Ollama shows "Disconnected" in popup
 
-**Fix:** Make sure Ollama is running:
+Make sure Ollama is running with CORS enabled:
+
 ```bash
-ollama serve
+OLLAMA_ORIGINS="*" ollama serve
 ```
 
-The extension will auto-reconnect when Ollama is available.
+### 403 Forbidden errors
+
+This means Ollama is running but blocking the extension. Restart with `OLLAMA_ORIGINS="*"`.
+
+### Buttons don't appear in Gmail
+
+The floating bar only shows when you open an email thread. If it still doesn't appear:
+1. Reload the extension from `chrome://extensions`
+2. Refresh the Gmail tab
+3. Open any email thread
+
+### "Extension was reloaded" error
+
+After updating the extension, refresh the Gmail tab to load the new content script.
 
 ### Model not found
 
-**Fix:** Pull the model first:
+Pull the required model first:
+
 ```bash
 ollama pull llama3
-ollama pull mistral
-ollama pull mixtral
-```
-
-### Panel doesn't appear
-
-**Fix:** The panel only appears when viewing a Gmail thread. Make sure you:
-1. Opened an email thread (not just the inbox)
-2. Clicked one of the AI Copilot buttons
-3. Ollama is running and connected
-
-### Replies are too short/long
-
-**Fix:** The tone setting in `content.js` is hard-coded to "professional". To change:
-
-Edit `handleButtonClick()` in `extension/content.js`:
-
-```javascript
-chrome.runtime.sendMessage(
-  {
-    // ...
-    tone: "casual"  // Change to: "casual", "brief", "detailed"
-  },
-  // ...
-);
 ```
 
 ## Development
 
 ### Debugging
 
-1. Go to `chrome://extensions`
-2. Find "AI Email Copilot"
-3. Click **"Inspect views" → "background.js"** to debug service worker
-4. Open **Console** in the Gmail tab to see content script logs
+- **Service worker logs**: `chrome://extensions` → AI Email Copilot → "Inspect views: service worker"
+- **Content script logs**: Open DevTools console on the Gmail tab
+- **Popup logs**: Right-click the extension icon → Inspect
 
-### Testing Flow
+### Local testing without zip
 
-1. Start Ollama: `ollama serve`
-2. Reload extension (Extension Manager → refresh button)
-3. Open a Gmail thread
-4. Click a button and check the panel for results
-5. Verify logs in browser console
+```bash
+./build.sh --dir
+```
 
-### Modifying Prompts
-
-All AI prompts are in `extension/utils/promptBuilder.js`. Edit the functions to customize:
-- `buildSummaryPrompt()` — Summary format
-- `buildReplyPrompt()` — Reply instructions
-- `buildCategoryPrompt()` — Categories and confidence
-- `buildActionPrompt()` — Action item format
-- `buildPMBrainPrompt()` — Style personalization
-
-## Privacy & Security
-
-✅ **All processing is local** — no data sent to external APIs
-✅ **Read-only Gmail access** — extension only reads email content
-✅ **No authentication needed** — runs entirely on your machine
-✅ **No storage** — analysis results are not saved (except PM Brain examples)
-
-PM Brain stores:
-- Your past sent emails (up to 50)
-- User edits to AI responses (up to 30)
-
-Clear anytime in extension popup → "Clear Memory"
-
-## Known Limitations
-
-- Response time depends on your CPU (local models are slower than cloud APIs)
-- Requires Ollama models to be pre-downloaded
-- Works best on Gmail threads with clear structure
-- Panel is desktop-only (not mobile-responsive)
-
-## Future Enhancements
-
-- ✨ Slack integration
-- 📊 Email analytics dashboard
-- 🎯 Auto-tagging suggestions
-- 🔄 Fine-tuned personal models
-- 📱 Mobile-responsive panel
-
-## Support
-
-For issues:
-1. Check that Ollama is running: `ollama serve`
-2. Verify models are downloaded: `ollama pull <model>`
-3. Reload the extension from chrome://extensions
-4. Check browser console for error messages
+This copies files to `dist/extension/` without zipping — useful for testing the build output.
 
 ## License
 
 MIT
-
----
-
-**Made with ❤️ for Gmail power users and PMs**
