@@ -1,0 +1,26 @@
+---
+description: Guidelines for Gmail DOM parsing and manipulation
+globs: extension/utils/gmailParser.js
+alwaysApply: false
+---
+
+# Gmail DOM Parsing
+
+## Approach
+- Gmail's DOM is unstable — always use multiple fallback selectors.
+- Guard every `querySelector` result with null checks.
+- Content scripts run in Chrome's isolated world (no access to Gmail's JS).
+
+## Key Selectors
+- Message bodies: `.a3s`
+- Message containers: `[data-message-id]`
+- Sender name: `.gD`
+- Thread wrapper: `[role="main"] [role="list"]`
+- Collapsed messages: `.kv`, `.gs`, `.hX`
+- Current user: `[aria-label*="Google Account"]`, `[email]`
+
+## Thread Expansion
+- `expandAllMessages()` uses a `WeakSet` to track clicked elements.
+- A stability counter breaks the loop when message count stops changing.
+- Always test with both single-message and multi-message threads.
+- Never click "show trimmed content" — trimmed content confuses the model.

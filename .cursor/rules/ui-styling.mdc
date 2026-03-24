@@ -1,0 +1,21 @@
+---
+description: UI and styling rules — Gmail-native design language
+globs: extension/content.js
+alwaysApply: false
+---
+
+# UI Styling Rules
+
+Read `style-guide.md` in the repo root before making any UI changes.
+
+## Key Rules
+- Accent color: Google Blue `#1a73e8` only. No purple, indigo, or gradients.
+- Cards: white background, 8px radius, Material elevation shadows (not borders).
+- Labels: sentence case, `#5f6368` color. Never UPPERCASE.
+- No emojis in the UI. Use SVG icons or plain text.
+- Font stack: `'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`
+- All panel/bar styles live inside `injectStyles()` in `content.js`.
+- Panel header: white background, subtle bottom border, no gradient.
+- Buttons: filled (blue bg), outlined (blue border), or ghost (text-only).
+- Chips: pill shape, `#dadce0` border, hover to `#e8f0fe` + blue.
+- Shadows: `0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15)` for cards.

@@ -1,0 +1,29 @@
+---
+description: Core project conventions for the AI Email Copilot Chrome extension
+alwaysApply: true
+---
+
+# Project Conventions
+
+## Architecture
+- Chrome Extension (Manifest V3), vanilla JS, no build step, no npm.
+- Content scripts injected into Gmail run in Chrome's isolated world.
+- All AI calls route through `background.js` → Ollama (localhost:11434).
+- All prompts in `promptBuilder.js` must include `SYSTEM_PERSONA` and `JSON_MANDATE`.
+
+## Code Style
+- Use `console.debug` with `[Gmail Copilot]` prefix, never `console.log`.
+- Async/await for DOM expansion and chrome.runtime messaging.
+- No external libraries or frameworks.
+
+## Documentation
+After any meaningful change, update docs **in the same changeset**:
+- `README.md` — features list, usage table, file structure, models, troubleshooting.
+- `docs/privacy.html` — permissions, stored data, processing flow, "Last updated" date.
+- `style-guide.md` — new components, changed tokens.
+- Never let feature names in docs diverge from code (renames must propagate).
+
+## Don'ts
+- Don't intercept Gmail's internal API requests (isolated world limitation).
+- Don't add npm dependencies or a build system.
+- Don't commit credentials or `.env` files.

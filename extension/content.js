@@ -83,11 +83,11 @@ function injectActionBar() {
   bar.id = "ai-copilot-bar";
 
   const buttons = [
-    { label: "Summarise", icon: "📋", action: "SUMMARISE" },
-    { label: "Reply",     icon: "✏️",  action: "REPLY" },
-    { label: "Categorise",icon: "🏷️", action: "CATEGORISE" },
-    { label: "Actions",   icon: "✓",  action: "ACTION_ITEMS" },
-    { label: "Your Brain", icon: "🧠", action: "TRAIN_BRAIN" }
+    { label: "Summarise", action: "SUMMARISE" },
+    { label: "Reply",     action: "REPLY" },
+    { label: "Categorise", action: "CATEGORISE" },
+    { label: "Actions",   action: "ACTION_ITEMS" },
+    { label: "Your Brain", action: "TRAIN_BRAIN" }
   ];
 
   // Logo / title
@@ -99,7 +99,7 @@ function injectActionBar() {
   buttons.forEach(btn => {
     const el = document.createElement("button");
     el.className = btn.action === "TRAIN_BRAIN" ? "aib-btn aib-btn-brain" : "aib-btn";
-    el.innerHTML = `${btn.icon} ${btn.label}`;
+    el.textContent = btn.label;
     el.addEventListener("click", () => handleButtonClick(btn.action));
     bar.appendChild(el);
   });
@@ -215,14 +215,16 @@ function renderSummary(container, summary) {
   const s = summary || {};
   container.innerHTML = `
     <div class="ai-section">
-      <h3>📋 Summary</h3>
-      <div class="ai-card">
-        <strong>TL;DR</strong>
+      <div class="ai-section-header">
+        <h3>Summary</h3>
+      </div>
+      <div class="ai-card ai-card-tldr">
+        <div class="ai-card-label">TL;DR</div>
         <p>${escapeHtml(s.tldr || "No summary available")}</p>
       </div>
-      ${renderList("Key Decisions", s.keyDecisions)}
-      ${renderList("Open Questions", s.openQuestions)}
-      ${renderList("Action Items", s.actionItems)}
+      ${renderList("Key decisions", s.keyDecisions)}
+      ${renderList("Open questions", s.openQuestions)}
+      ${renderList("Action items", s.actionItems)}
     </div>`;
   addCopyButton(container, formatSummaryText(s));
 }
@@ -232,21 +234,23 @@ function renderReply(container, reply) {
 
   container.innerHTML = `
     <div class="ai-section">
-      <h3>✏️ Suggested Reply</h3>
+      <div class="ai-section-header">
+        <h3>Suggested Reply</h3>
+      </div>
       <div id="ai-reply-text" class="ai-reply">${escapeHtml(reply).replace(/\n/g, "<br>")}</div>
       <div class="ai-reply-actions" id="ai-reply-actions"></div>
       <div class="ai-refine-box">
-        <label class="ai-refine-label">Refine this reply:</label>
+        <div class="ai-refine-label">Refine this reply</div>
+        <div class="ai-refine-chips" id="ai-refine-chips"></div>
         <div class="ai-refine-row">
           <input
             type="text"
             id="ai-feedback-input"
             class="ai-refine-input"
-            placeholder='e.g. "make it shorter", "more formal", "mention deadline"'
+            placeholder='e.g. "make it shorter", "mention the deadline"'
           />
           <button id="ai-refine-btn" class="aib-btn aib-btn-primary ai-refine-btn">Refine</button>
         </div>
-        <div class="ai-refine-chips" id="ai-refine-chips"></div>
       </div>
     </div>`;
 
@@ -294,9 +298,9 @@ function submitRefinement(container) {
   const replyEl = container.querySelector("#ai-reply-text");
   const prevHtml = replyEl.innerHTML;
   replyEl.innerHTML = `
-    <div class="aip-loading" style="padding:12px">
+    <div class="aip-loading" style="padding:14px">
       <div class="aip-spinner"></div>
-      <p>Refining reply...</p>
+      <p class="aip-loading-text">Refining...</p>
     </div>`;
 
   // Disable input while refining
@@ -337,12 +341,24 @@ function submitRefinement(container) {
 
 function renderCategory(container, category) {
   const c = category || {};
+  const confidence = c.confidence || 0;
+  const confidenceColor = confidence >= 80 ? "#188038" : confidence >= 50 ? "#e37400" : "#d93025";
   container.innerHTML = `
     <div class="ai-section">
-      <h3>🏷️ Category</h3>
-      <div class="ai-card">
+      <div class="ai-section-header">
+        <h3>Category</h3>
+      </div>
+      <div class="ai-category-card">
         <span class="ai-category-badge">${escapeHtml(c.category || "Unknown")}</span>
-        <p class="ai-confidence">Confidence: ${c.confidence || 0}%</p>
+        <div class="ai-confidence-bar-wrap">
+          <div class="ai-confidence-label">
+            <span>Confidence</span>
+            <span style="color:${confidenceColor};font-weight:500">${confidence}%</span>
+          </div>
+          <div class="ai-confidence-bar">
+            <div class="ai-confidence-fill" style="width:${confidence}%;background:${confidenceColor}"></div>
+          </div>
+        </div>
       </div>
     </div>`;
 }
@@ -351,18 +367,23 @@ function renderActionItems(container, items) {
   const list = Array.isArray(items) ? items : [];
   container.innerHTML = `
     <div class="ai-section">
-      <h3>✓ Action Items</h3>
+      <div class="ai-section-header">
+        <h3>Action items</h3>
+        ${list.length > 0 ? `<span class="ai-badge">${list.length}</span>` : ""}
+      </div>
       ${list.length === 0 ? '<p class="ai-muted">No action items found.</p>' : ""}
       <div class="ai-actions-list">
         ${list.map(item => `
           <label class="ai-action-row">
             <input type="checkbox" />
             <div>
-              <span>${escapeHtml(item.task)}</span>
-              ${item.owner ? `<small>Owner: ${escapeHtml(item.owner)}</small>` : ""}
-              <small class="ai-priority ai-priority-${(item.priority || "medium").toLowerCase()}">
-                ${item.priority || "Medium"}
-              </small>
+              <span class="ai-action-task">${escapeHtml(item.task)}</span>
+              <div class="ai-action-meta">
+                ${item.owner ? `<span class="ai-action-owner">${escapeHtml(item.owner)}</span>` : ""}
+                <span class="ai-priority ai-priority-${(item.priority || "medium").toLowerCase()}">
+                  ${item.priority || "Medium"}
+                </span>
+              </div>
             </div>
           </label>`).join("")}
       </div>
@@ -403,7 +424,7 @@ function renderTrainBrainPanel(messages, metadata) {
 
   content.innerHTML = `
     <div class="ai-section">
-      <h3>🧠 Train Your Brain</h3>
+      <div class="ai-section-header"><h3>Train Your Brain</h3></div>
       <p class="ai-train-subtitle">
         Select messages from this thread to save to Your Brain memory.
         Your writing style will be learned from these examples.
@@ -473,7 +494,7 @@ function renderTrainBrainPanel(messages, metadata) {
       ` : ""}
 
       <button id="ai-train-save" class="aib-btn aib-btn-primary ai-train-save-btn">
-        🧠 Save to Your Brain
+        Save to Your Brain
       </button>
     </div>
   `;
@@ -534,14 +555,14 @@ function saveSelectedToTrainBrain(selectedMessages, subject, container) {
     (response) => {
       if (chrome.runtime.lastError || !response || !response.success) {
         saveBtn.disabled = false;
-        saveBtn.textContent = "🧠 Save to Your Brain";
+        saveBtn.textContent = "Save to Your Brain";
         showNotification(response?.error || "Failed to save", "error");
         return;
       }
 
       container.querySelector(".ai-section").innerHTML = `
         <div class="ai-train-success">
-          <div class="ai-train-success-icon">🧠</div>
+          <div class="ai-train-success-icon">&#10003;</div>
           <h3>Brain Updated!</h3>
           <p>${response.savedCount} message${response.savedCount !== 1 ? "s" : ""} saved to Your Brain.</p>
           <p class="ai-muted">Total emails in memory: ${response.totalEmails}</p>
@@ -562,7 +583,7 @@ function renderList(title, items) {
   if (!items || items.length === 0) return "";
   return `
     <div class="ai-card">
-      <strong>${escapeHtml(title)}</strong>
+      <div class="ai-card-label">${escapeHtml(title)}</div>
       <ul>${items.map(i => `<li>${escapeHtml(i)}</li>`).join("")}</ul>
     </div>`;
 }
@@ -577,12 +598,16 @@ function formatSummaryText(s) {
 
 function addCopyButton(container, text) {
   const btn = document.createElement("button");
-  btn.className = "aib-btn aib-btn-primary";
-  btn.textContent = "📋 Copy";
+  btn.className = "aib-action-btn";
+  btn.textContent = "Copy";
   btn.addEventListener("click", () => {
     navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = "✓ Copied!";
-      setTimeout(() => { btn.textContent = "📋 Copy"; }, 2000);
+      btn.textContent = "Copied!";
+      btn.classList.add("aib-action-btn-success");
+      setTimeout(() => {
+        btn.textContent = "Copy";
+        btn.classList.remove("aib-action-btn-success");
+      }, 2000);
     });
   });
   container.appendChild(btn);
@@ -590,8 +615,8 @@ function addCopyButton(container, text) {
 
 function addInsertButton(container, text) {
   const btn = document.createElement("button");
-  btn.className = "aib-btn aib-btn-primary";
-  btn.textContent = "📤 Insert into Reply";
+  btn.className = "aib-action-btn aib-action-btn-filled";
+  btn.textContent = "Insert into reply";
   btn.addEventListener("click", () => {
     if (insertIntoReply(text)) {
       showNotification("Inserted into reply", "success");
@@ -618,8 +643,17 @@ function injectPanel() {
   panel.id = "ai-copilot-panel";
   panel.innerHTML = `
     <div class="aip-header">
-      <span>AI Copilot</span>
-      <button id="ai-close-panel">✕</button>
+      <div class="aip-header-left">
+        <svg class="aip-header-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L14.09 8.26L20 9.27L15.55 13.97L16.91 20L12 16.9L7.09 20L8.45 13.97L4 9.27L9.91 8.26L12 2Z" fill="#1a73e8"/>
+        </svg>
+        <span class="aip-header-title">AI Copilot</span>
+      </div>
+      <button id="ai-close-panel" aria-label="Close panel">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
     <div id="ai-copilot-content" class="aip-body"></div>`;
 
@@ -640,7 +674,7 @@ function showPanelLoading(message) {
   content.innerHTML = `
     <div class="aip-loading">
       <div class="aip-spinner"></div>
-      <p>${escapeHtml(message)}...</p>
+      <p class="aip-loading-text">${escapeHtml(message)}</p>
     </div>`;
 }
 
@@ -649,7 +683,8 @@ function showPanelError(message) {
   if (!content) return;
   content.innerHTML = `
     <div class="aip-error">
-      <p>⚠️ ${escapeHtml(message)}</p>
+      <div class="aip-error-icon">⚠️</div>
+      <p class="aip-error-msg">${escapeHtml(message)}</p>
       <small>Make sure Ollama is running on localhost:11434</small>
     </div>`;
 }
@@ -681,6 +716,9 @@ function injectStyles() {
   const style = document.createElement("style");
   style.id = "ai-copilot-styles";
   style.textContent = `
+    /* ── Design tokens (Gmail-native) ────────────── */
+    /* See style-guide.md for full reference         */
+
     /* ── Floating Action Bar ──────────────────────── */
     #ai-copilot-bar {
       position: fixed;
@@ -689,74 +727,76 @@ function injectStyles() {
       transform: translateX(-50%) translateY(80px);
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 8px 12px;
-      background: #1f2937;
-      border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0,0,0,.25);
+      gap: 4px;
+      padding: 6px 8px;
+      background: #202124;
+      border-radius: 24px;
+      box-shadow: 0 1px 3px rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
       z-index: 9999;
       opacity: 0;
-      transition: transform .3s ease, opacity .3s ease;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      transition: transform .25s cubic-bezier(.4,0,.2,1), opacity .25s ease;
+      font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     #ai-copilot-bar.visible {
       transform: translateX(-50%) translateY(0);
       opacity: 1;
     }
     .aib-title {
-      color: #a5b4fc;
+      color: #8ab4f8;
       font-size: 12px;
-      font-weight: 700;
-      padding: 0 8px 0 4px;
-      border-right: 1px solid #374151;
-      margin-right: 4px;
+      font-weight: 500;
+      padding: 0 10px 0 8px;
+      border-right: 1px solid #3c4043;
+      margin-right: 2px;
       white-space: nowrap;
     }
     .aib-btn {
-      padding: 7px 14px;
-      background: #374151;
-      color: #e5e7eb;
+      padding: 8px 14px;
+      background: transparent;
+      color: #e8eaed;
       border: none;
-      border-radius: 8px;
+      border-radius: 18px;
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
       white-space: nowrap;
       transition: background .15s;
+      font-family: inherit;
     }
-    .aib-btn:hover { background: #4b5563; color: #fff; }
+    .aib-btn:hover {
+      background: rgba(232,234,237,.12);
+      color: #fff;
+    }
     .aib-btn-brain {
-      background: #4c1d95;
-      color: #e0d5ff;
-      border-left: 1px solid #6b7280;
-      margin-left: 2px;
+      color: #c58af9;
     }
-    .aib-btn-brain:hover { background: #6d28d9; color: #fff; }
+    .aib-btn-brain:hover { background: rgba(197,138,249,.15); color: #e8d0fe; }
 
     .aib-btn-primary {
-      background: #3b82f6;
+      background: #1a73e8;
       color: #fff;
-      margin-top: 12px;
-      margin-right: 8px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      padding: 8px 16px;
     }
-    .aib-btn-primary:hover { background: #2563eb; }
+    .aib-btn-primary:hover { background: #1765cc; }
 
     /* ── Side Panel ───────────────────────────────── */
     #ai-copilot-panel {
       position: fixed;
-      top: 64px;
-      right: -440px;
-      width: 420px;
-      bottom: 80px;
+      top: 0;
+      right: -420px;
+      width: 400px;
+      bottom: 0;
       background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px 0 0 12px;
-      box-shadow: -4px 0 20px rgba(0,0,0,.08);
+      border-left: 1px solid #dadce0;
+      box-shadow: 0 4px 8px rgba(60,64,67,.3), 0 8px 16px 6px rgba(60,64,67,.15);
       display: flex;
       flex-direction: column;
       z-index: 10000;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      transition: right .3s ease;
+      font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      transition: right .25s cubic-bezier(.4,0,.2,1);
     }
     #ai-copilot-panel.visible { right: 0; }
 
@@ -765,30 +805,40 @@ function injectStyles() {
       justify-content: space-between;
       align-items: center;
       padding: 14px 16px;
-      border-bottom: 1px solid #e5e7eb;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 12px 0 0 0;
+      border-bottom: 1px solid #dadce0;
+      background: #fff;
+      flex-shrink: 0;
     }
-    .aip-header span {
-      font-size: 15px;
-      font-weight: 700;
-      color: #fff;
+    .aip-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .aip-header-icon {
+      display: flex;
+      align-items: center;
+    }
+    .aip-header-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #202124;
     }
     .aip-header button {
-      background: rgba(255,255,255,.2);
+      background: transparent;
       border: none;
-      color: #fff;
-      font-size: 16px;
+      color: #5f6368;
       cursor: pointer;
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background .15s;
     }
-    .aip-header button:hover { background: rgba(255,255,255,.35); }
+    .aip-header button:hover {
+      background: #f1f3f4;
+    }
 
     .aip-body {
       overflow-y: auto;
@@ -796,193 +846,390 @@ function injectStyles() {
       flex: 1;
       font-size: 13px;
       line-height: 1.6;
-      color: #1f2937;
+      color: #202124;
+      background: #f8f9fa;
     }
+    .aip-body::-webkit-scrollbar { width: 8px; }
+    .aip-body::-webkit-scrollbar-track { background: transparent; }
+    .aip-body::-webkit-scrollbar-thumb {
+      background: #dadce0;
+      border-radius: 4px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+    .aip-body::-webkit-scrollbar-thumb:hover { background: #bdc1c6; background-clip: padding-box; }
 
-    /* ── Content blocks ───────────────────────────── */
-    .ai-section h3 {
-      margin: 0 0 12px;
+    /* ── Section headers ──────────────────────────── */
+    .ai-section {
+      animation: aip-fadeIn .2s ease;
+    }
+    @keyframes aip-fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .ai-section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .ai-section-header h3 {
+      margin: 0;
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 500;
+      color: #202124;
     }
-    .ai-card {
-      background: #f3f4f6;
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 10px;
+    .ai-badge {
+      background: #e8f0fe;
+      color: #1a73e8;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 100px;
+      margin-left: auto;
     }
-    .ai-card strong { display: block; margin-bottom: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: #6b7280; }
-    .ai-card p { margin: 0; }
-    .ai-card ul { margin: 4px 0 0; padding-left: 18px; }
-    .ai-card li { margin-bottom: 3px; }
 
+    /* ── Content cards ────────────────────────────── */
+    .ai-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+      transition: box-shadow .15s;
+    }
+    .ai-card:hover {
+      box-shadow: 0 1px 3px rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
+    }
+    .ai-card-tldr {
+      border-left: 3px solid #1a73e8;
+      background: #e8f0fe;
+      box-shadow: none;
+    }
+    .ai-card-tldr:hover { box-shadow: none; }
+    .ai-card-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: #5f6368;
+      margin-bottom: 6px;
+    }
+    .ai-card p { margin: 0; color: #202124; font-size: 13px; }
+    .ai-card ul {
+      margin: 6px 0 0;
+      padding-left: 0;
+      list-style: none;
+    }
+    .ai-card li {
+      position: relative;
+      padding: 5px 0 5px 14px;
+      color: #3c4043;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .ai-card li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 12px;
+      width: 5px;
+      height: 5px;
+      background: #dadce0;
+      border-radius: 50%;
+    }
+    .ai-card li + li { border-top: 1px solid #e8eaed; }
+
+    /* ── Reply block ──────────────────────────────── */
     .ai-reply {
-      padding: 14px;
-      background: #eff6ff;
-      border-left: 3px solid #3b82f6;
-      border-radius: 6px;
+      padding: 14px 16px;
+      background: #fff;
+      border-radius: 8px;
       margin-bottom: 10px;
       white-space: pre-wrap;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #202124;
+      box-shadow: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
     }
 
+    /* ── Category card ────────────────────────────── */
+    .ai-category-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px 16px;
+      box-shadow: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+      text-align: center;
+    }
     .ai-category-badge {
       display: inline-block;
-      background: #667eea;
+      background: #1a73e8;
       color: #fff;
-      padding: 4px 12px;
-      border-radius: 20px;
+      padding: 6px 20px;
+      border-radius: 100px;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 500;
     }
-    .ai-confidence { margin-top: 8px; color: #6b7280; font-size: 12px; }
+    .ai-confidence-bar-wrap {
+      margin-top: 16px;
+      text-align: left;
+    }
+    .ai-confidence-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #5f6368;
+      margin-bottom: 6px;
+    }
+    .ai-confidence-bar {
+      height: 4px;
+      background: #e8eaed;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .ai-confidence-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width .5s ease;
+    }
 
+    /* ── Action items ─────────────────────────────── */
     .ai-actions-list { display: flex; flex-direction: column; gap: 6px; }
     .ai-action-row {
       display: flex;
-      gap: 8px;
-      padding: 10px;
-      background: #f9fafb;
-      border-radius: 6px;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      border-radius: 8px;
       cursor: pointer;
       align-items: flex-start;
+      box-shadow: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+      transition: box-shadow .15s;
     }
-    .ai-action-row:hover { background: #f3f4f6; }
-    .ai-action-row input[type="checkbox"] { margin-top: 3px; cursor: pointer; }
+    .ai-action-row:hover {
+      box-shadow: 0 1px 3px rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
+    }
+    .ai-action-row input[type="checkbox"] {
+      margin-top: 2px;
+      cursor: pointer;
+      accent-color: #1a73e8;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
     .ai-action-row div { flex: 1; }
-    .ai-action-row span { display: block; font-size: 13px; }
-    .ai-action-row small { display: block; font-size: 11px; color: #6b7280; }
-    .ai-priority { font-weight: 600; }
-    .ai-priority-high   { color: #dc2626; }
-    .ai-priority-medium { color: #ea580c; }
-    .ai-priority-low    { color: #16a34a; }
-    .ai-muted { color: #9ca3af; font-style: italic; }
+    .ai-action-task { display: block; font-size: 13px; color: #202124; }
+    .ai-action-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .ai-action-owner {
+      font-size: 12px;
+      color: #5f6368;
+    }
+    .ai-priority {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 1px 8px;
+      border-radius: 4px;
+    }
+    .ai-priority-high   { color: #d93025; background: #fce8e6; }
+    .ai-priority-medium { color: #e37400; background: #fef7e0; }
+    .ai-priority-low    { color: #188038; background: #e6f4ea; }
+    .ai-muted { color: #80868b; font-style: italic; text-align: center; padding: 16px 0; }
 
     /* ── Loading / Error ──────────────────────────── */
-    .aip-loading { text-align: center; padding: 40px 16px; }
-    .aip-loading p { margin-top: 14px; color: #6b7280; }
+    .aip-loading {
+      text-align: center;
+      padding: 48px 24px 40px;
+    }
     .aip-spinner {
       display: inline-block;
-      width: 24px; height: 24px;
-      border: 3px solid #e5e7eb;
-      border-top-color: #667eea;
+      width: 28px;
+      height: 28px;
+      border: 3px solid #e8eaed;
+      border-top-color: #1a73e8;
       border-radius: 50%;
       animation: aip-spin .7s linear infinite;
     }
     @keyframes aip-spin { to { transform: rotate(360deg); } }
+    .aip-loading-text {
+      margin: 14px 0 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: #5f6368;
+    }
 
     .aip-error {
-      padding: 16px;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
+      padding: 20px 16px;
+      background: #fce8e6;
       border-radius: 8px;
-      color: #b91c1c;
+      text-align: center;
     }
-    .aip-error small { display: block; margin-top: 8px; color: #dc2626; font-size: 12px; }
+    .aip-error-icon { font-size: 28px; margin-bottom: 10px; }
+    .aip-error-msg {
+      color: #d93025;
+      font-weight: 500;
+      font-size: 13px;
+      margin: 0 0 6px;
+    }
+    .aip-error small { display: block; color: #5f6368; font-size: 12px; }
 
     /* ── Toast ─────────────────────────────────────── */
     .ai-toast {
       position: fixed;
       bottom: 90px;
       right: 24px;
-      padding: 10px 18px;
+      padding: 10px 16px;
       border-radius: 8px;
       font-size: 13px;
       font-weight: 500;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       z-index: 10001;
       opacity: 0;
-      transform: translateY(10px);
-      transition: opacity .3s, transform .3s;
+      transform: translateY(8px);
+      transition: opacity .2s ease-out, transform .2s ease-out;
+      box-shadow: 0 1px 3px rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
     }
     .ai-toast.visible { opacity: 1; transform: translateY(0); }
-    .ai-toast-success { background: #065f46; color: #fff; }
-    .ai-toast-error   { background: #991b1b; color: #fff; }
-    .ai-toast-info    { background: #1e40af; color: #fff; }
+    .ai-toast-success { background: #202124; color: #fff; }
+    .ai-toast-error   { background: #202124; color: #fff; }
+    .ai-toast-info    { background: #202124; color: #fff; }
 
     /* ── Refine reply ─────────────────────────────── */
     .ai-reply-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 0;
+      gap: 6px;
     }
     .ai-refine-box {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid #e5e7eb;
+      margin-top: 12px;
+      padding: 14px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
     }
     .ai-refine-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #202124;
+      margin-bottom: 10px;
     }
     .ai-refine-row {
       display: flex;
-      gap: 6px;
+      gap: 8px;
     }
     .ai-refine-input {
       flex: 1;
       padding: 8px 12px;
-      border: 1px solid #d1d5db;
+      border: 1px solid #dadce0;
       border-radius: 8px;
       font-size: 13px;
       font-family: inherit;
       outline: none;
-      transition: border-color .15s;
+      background: #fff;
+      color: #202124;
+      transition: border-color .15s, box-shadow .15s;
     }
     .ai-refine-input:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 2px rgba(102,126,234,.15);
+      border-color: #1a73e8;
+      box-shadow: 0 0 0 2px rgba(26,115,232,.2);
     }
     .ai-refine-input:disabled {
-      background: #f3f4f6;
-      color: #9ca3af;
+      background: #f1f3f4;
+      color: #80868b;
     }
     .ai-refine-btn {
       margin: 0 !important;
       white-space: nowrap;
       padding: 8px 16px !important;
+      border-radius: 8px !important;
+      background: #1a73e8 !important;
+      color: #fff !important;
+      font-weight: 500 !important;
+      border: none !important;
+    }
+    .ai-refine-btn:hover {
+      background: #1765cc !important;
     }
     .ai-refine-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin-top: 10px;
+      margin-bottom: 10px;
     }
     .ai-chip {
-      padding: 4px 10px;
-      background: #f3f4f6;
-      border: 1px solid #e5e7eb;
-      border-radius: 20px;
-      font-size: 11px;
-      color: #374151;
+      padding: 4px 12px;
+      background: #fff;
+      border: 1px solid #dadce0;
+      border-radius: 100px;
+      font-size: 12px;
+      color: #3c4043;
       cursor: pointer;
       transition: all .15s;
       font-family: inherit;
+      font-weight: 500;
     }
     .ai-chip:hover {
-      background: #e0e7ff;
-      border-color: #a5b4fc;
-      color: #4338ca;
+      background: #e8f0fe;
+      border-color: #1a73e8;
+      color: #1a73e8;
+    }
+
+    /* ── Action buttons (copy, insert) ────────────── */
+    .aib-action-btn {
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      background: #fff;
+      color: #1a73e8;
+      border: 1px solid #dadce0;
+      cursor: pointer;
+      transition: all .15s;
+      margin-top: 8px;
+      margin-right: 8px;
+      font-family: inherit;
+    }
+    .aib-action-btn:hover {
+      background: #f8f9fa;
+      border-color: #1a73e8;
+    }
+    .aib-action-btn-filled {
+      background: #1a73e8;
+      color: #fff;
+      border-color: #1a73e8;
+    }
+    .aib-action-btn-filled:hover {
+      background: #1765cc;
+      border-color: #1765cc;
+      color: #fff;
+    }
+    .aib-action-btn-success {
+      background: #188038 !important;
+      color: #fff !important;
+      border-color: #188038 !important;
     }
 
     /* ── Train Brain ──────────────────────────────── */
     .ai-train-subtitle {
       font-size: 12px;
-      color: #6b7280;
+      color: #5f6368;
       margin-bottom: 12px;
-      line-height: 1.5;
+      line-height: 1.6;
     }
     .ai-train-thread-info {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 12px;
-      background: #f3f4f6;
+      padding: 10px 14px;
+      background: #fff;
       border-radius: 8px;
       margin-bottom: 14px;
       font-size: 12px;
+      box-shadow: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
     }
     .ai-train-thread-info strong {
       flex: 1;
@@ -990,8 +1237,9 @@ function injectStyles() {
       text-overflow: ellipsis;
       white-space: nowrap;
       margin-right: 8px;
+      color: #202124;
     }
-    .ai-train-thread-info span { color: #6b7280; white-space: nowrap; }
+    .ai-train-thread-info span { color: #5f6368; white-space: nowrap; }
     .ai-train-group {
       margin-bottom: 14px;
     }
@@ -1007,33 +1255,36 @@ function injectStyles() {
       gap: 6px;
       cursor: pointer;
       font-size: 13px;
+      font-weight: 500;
+      color: #202124;
     }
     .ai-train-hint {
       font-size: 11px;
-      color: #9ca3af;
+      color: #80868b;
       font-style: italic;
     }
     .ai-train-msg {
       display: flex;
       align-items: flex-start;
-      gap: 8px;
-      padding: 10px;
-      border: 1px solid #e5e7eb;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #fff;
       border-radius: 8px;
       margin-bottom: 6px;
       cursor: pointer;
-      transition: all .15s;
+      box-shadow: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+      transition: box-shadow .15s;
     }
     .ai-train-msg:hover {
-      border-color: #a5b4fc;
-      background: #f5f3ff;
+      box-shadow: 0 1px 3px rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
     }
     .ai-train-msg-mine {
-      border-left: 3px solid #667eea;
+      border-left: 3px solid #1a73e8;
     }
     .ai-train-msg input[type="checkbox"] {
       margin-top: 3px;
       cursor: pointer;
+      accent-color: #1a73e8;
     }
     .ai-train-msg-body {
       flex: 1;
@@ -1042,8 +1293,8 @@ function injectStyles() {
     .ai-train-sender {
       display: block;
       font-size: 11px;
-      font-weight: 600;
-      color: #6b7280;
+      font-weight: 500;
+      color: #5f6368;
       margin-bottom: 4px;
       text-transform: uppercase;
       letter-spacing: .3px;
@@ -1051,8 +1302,8 @@ function injectStyles() {
     .ai-train-msg-body p {
       margin: 0;
       font-size: 12px;
-      color: #374151;
-      line-height: 1.4;
+      color: #3c4043;
+      line-height: 1.5;
       overflow: hidden;
       display: -webkit-box;
       -webkit-line-clamp: 3;
@@ -1061,30 +1312,42 @@ function injectStyles() {
     .ai-train-save-btn {
       width: 100%;
       text-align: center;
-      margin-top: 8px !important;
+      margin-top: 10px !important;
       padding: 10px !important;
       font-size: 13px !important;
+      border-radius: 8px !important;
+      background: #1a73e8 !important;
+      color: #fff !important;
+      font-weight: 500 !important;
+      border: none !important;
+    }
+    .ai-train-save-btn:hover {
+      background: #1765cc !important;
     }
     .ai-train-success {
       text-align: center;
-      padding: 32px 16px;
+      padding: 36px 20px;
     }
     .ai-train-success-icon {
-      font-size: 48px;
+      font-size: 40px;
       margin-bottom: 12px;
+      color: #188038;
     }
     .ai-train-success h3 {
       margin: 0 0 8px;
-      font-size: 18px;
-      color: #1f2937;
+      font-size: 16px;
+      font-weight: 500;
+      color: #202124;
     }
     .ai-train-success p {
       margin: 0 0 4px;
       font-size: 13px;
+      color: #5f6368;
     }
     .ai-train-empty p {
       font-size: 12px;
       margin-bottom: 10px;
+      color: #5f6368;
     }
   `;
 

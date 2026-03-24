@@ -1,0 +1,23 @@
+---
+description: Rules for AI prompt templates and Ollama integration
+globs: extension/utils/promptBuilder.js,extension/background.js
+alwaysApply: false
+---
+
+# Prompts & AI Integration
+
+## Prompt Rules
+- Every prompt must begin with `SYSTEM_PERSONA` and end with `JSON_MANDATE`.
+- Persona: "highly intelligent email assistant" — not PM-specific.
+- All model responses must be JSON. Parse with `parseJsonResponse()`.
+- Always pass `currentUser` context when available.
+
+## Background.js
+- All Ollama calls happen here, never in content scripts.
+- Models configured in the `MODELS` object at the top of the file.
+- Use `handleXxx` pattern for message handlers.
+- Always include error handling with fallback for non-JSON responses.
+
+## Storage Keys
+- Your Brain data uses `your_brain_*` prefix in `chrome.storage.local`.
+- Functions: `getYourBrainExamples`, `isYourBrainEnabled`, `setYourBrainEnabled`.
