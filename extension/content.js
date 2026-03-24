@@ -131,7 +131,7 @@ function isExtensionContextValid() {
 
 // ─── Button Click Handler ─────────────────────────────────────────
 
-function handleButtonClick(action) {
+async function handleButtonClick(action) {
   if (!isExtensionContextValid()) {
     showPanel(true);
     showPanelError("Extension was reloaded. Please refresh this Gmail tab (Ctrl+R / Cmd+R).");
@@ -144,49 +144,56 @@ function handleButtonClick(action) {
     return;
   }
 
-  const thread = getEmailThread();
-  const metadata = getEmailMetadata();
-
-  if (!thread || thread.length < 10) {
-    showNotification("Could not read the email thread. Try scrolling to expand messages.", "error");
-    return;
-  }
-
-  lastThreadContext = thread;
-
   showPanel(true);
+  showPanelLoading("Expanding thread...");
 
-  const friendlyName = {
-    SUMMARISE: "Summarising thread",
-    REPLY: "Generating reply",
-    CATEGORISE: "Categorising email",
-    ACTION_ITEMS: "Extracting action items"
-  };
-  showPanelLoading(friendlyName[action] || "Working...");
+  try {
+    const thread = await getEmailThread();
+    const metadata = getEmailMetadata();
 
-  chrome.runtime.sendMessage(
-    {
-      action,
-      thread,
-      summary: `${metadata.subject}\n\n${thread}`,
-      email: thread,
-      tone: "professional"
-    },
-    (response) => {
-      if (chrome.runtime.lastError) {
-        showPanelError("Failed to connect to background script: " + chrome.runtime.lastError.message);
-        return;
-      }
-      if (!response || response.error) {
-        showPanelError(response?.error || "Unknown error occurred");
-        return;
-      }
-      if (response.success) {
-        currentAnalysis = response;
-        renderPanelContent(action, response);
-      }
+    if (!thread || thread.length < 10) {
+      showNotification("Could not read the email thread. The thread appears to be empty.", "error");
+      return;
     }
-  );
+
+    lastThreadContext = thread;
+
+    const friendlyName = {
+      SUMMARISE: "Summarising thread",
+      REPLY: "Generating reply",
+      CATEGORISE: "Categorising email",
+      ACTION_ITEMS: "Extracting action items"
+    };
+    showPanelLoading(friendlyName[action] || "Working...");
+
+    chrome.runtime.sendMessage(
+      {
+        action,
+        thread,
+        summary: `${metadata.subject}\n\n${thread}`,
+        email: thread,
+        tone: "professional",
+        currentUser: metadata.currentUser
+      },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          showPanelError("Failed to connect to background script: " + chrome.runtime.lastError.message);
+          return;
+        }
+        if (!response || response.error) {
+          showPanelError(response?.error || "Unknown error occurred");
+          return;
+        }
+        if (response.success) {
+          currentAnalysis = response;
+          renderPanelContent(action, response);
+        }
+      }
+    );
+  } catch (error) {
+    console.error("Error in handleButtonClick:", error);
+    showPanelError("Error processing thread: " + error.message);
+  }
 }
 
 // ─── Panel Rendering ──────────────────────────────────────────────
@@ -367,17 +374,24 @@ function renderActionItems(container, items) {
 
 // ─── Train Brain ──────────────────────────────────────────────────
 
-function handleTrainBrain() {
-  const messages = getIndividualMessages();
-  const metadata = getEmailMetadata();
-
-  if (messages.length === 0) {
-    showNotification("No messages found in this thread", "error");
-    return;
-  }
-
+async function handleTrainBrain() {
   showPanel(true);
-  renderTrainBrainPanel(messages, metadata);
+  showPanelLoading("Expanding thread...");
+
+  try {
+    const messages = await getIndividualMessages();
+    const metadata = getEmailMetadata();
+
+    if (messages.length === 0) {
+      showNotification("No messages found in this thread", "error");
+      return;
+    }
+
+    renderTrainBrainPanel(messages, metadata);
+  } catch (error) {
+    console.error("Error in handleTrainBrain:", error);
+    showPanelError("Error processing thread: " + error.message);
+  }
 }
 
 function renderTrainBrainPanel(messages, metadata) {

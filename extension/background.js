@@ -15,7 +15,7 @@ const MODELS = {
   REPLY: "llama3",
   CATEGORY: "mistral",
   ACTIONS: "mistral",
-  PM_BRAIN: "mixtral"
+  PM_BRAIN: "llama3"
 };
 
 // Listen for messages from content script
@@ -80,7 +80,7 @@ async function handleMessage(request, sender, sendResponse) {
  */
 async function handleSummarize(request, sendResponse) {
   try {
-    const prompt = buildSummaryPrompt(request.thread);
+    const prompt = buildSummaryPrompt(request.thread, request.currentUser);
     const response = await callOllama(prompt, MODELS.SUMMARY);
 
     const parsed = parseJsonResponse(response);
@@ -109,7 +109,7 @@ async function handleSummarize(request, sendResponse) {
  */
 async function handleReply(request, sendResponse) {
   try {
-    const prompt = buildReplyPrompt(request.summary, request.tone || "professional");
+    const prompt = buildReplyPrompt(request.summary, request.tone || "professional", request.currentUser);
     const response = await callOllama(prompt, MODELS.REPLY);
 
     sendResponse({
@@ -158,7 +158,7 @@ async function handleCategorize(request, sendResponse) {
  */
 async function handleActionItems(request, sendResponse) {
   try {
-    const prompt = buildActionPrompt(request.thread);
+    const prompt = buildActionPrompt(request.thread, request.currentUser);
     const response = await callOllama(prompt, MODELS.ACTIONS);
 
     const parsed = parseJsonResponse(response);

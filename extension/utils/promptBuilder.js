@@ -2,13 +2,14 @@
  * Prompt templates for various AI tasks
  */
 
-function buildSummaryPrompt(thread) {
+function buildSummaryPrompt(thread, currentUser = "Unknown") {
+  const userContext = currentUser && currentUser !== "Unknown" ? `\nYou are analyzing emails for: ${currentUser}` : "";
   return `You are a product manager assistant. Analyze this email thread and provide:
 
 1. TL;DR: A one-sentence summary
 2. Key Decisions: Main decisions mentioned or implied
 3. Open Questions: Unresolved questions or ambiguities
-4. Action Items: Concrete tasks that need to be done
+4. Action Items: Concrete tasks that need to be done${userContext}
 
 Email Thread:
 ${thread}
@@ -22,7 +23,7 @@ Respond in this exact JSON format:
 }`;
 }
 
-function buildReplyPrompt(summary, tone = "professional") {
+function buildReplyPrompt(summary, tone = "professional", currentUser = "Unknown") {
   const toneGuidance = {
     professional: "formal and professional",
     casual: "friendly and conversational",
@@ -30,7 +31,9 @@ function buildReplyPrompt(summary, tone = "professional") {
     detailed: "thorough and detailed"
   };
 
-  return `You are a product manager assistant. Draft a reply to this email thread.
+  const userContext = currentUser && currentUser !== "Unknown" ? `You are replying on behalf of: ${currentUser}\n\n` : "";
+
+  return `${userContext}You are a product manager assistant. Draft a reply to this email thread.
 
 Thread Summary:
 ${summary}
@@ -70,11 +73,12 @@ Respond in this exact JSON format:
 }`;
 }
 
-function buildActionPrompt(thread) {
+function buildActionPrompt(thread, currentUser = "Unknown") {
+  const userContext = currentUser && currentUser !== "Unknown" ? `\nCurrent user email: ${currentUser}` : "";
   return `Extract action items from this email thread. For each action item, provide:
 - Task description
 - Owner (person responsible, if mentioned)
-- Priority (Low, Medium, High)
+- Priority (Low, Medium, High)${userContext}
 
 Email Thread:
 ${thread}

@@ -20,7 +20,7 @@ Download from [ollama.ai](https://ollama.ai), then pull the required models:
 ```bash
 ollama pull llama3        # Reply generation
 ollama pull mistral       # Summarization, categorization, actions
-ollama pull mixtral       # PM Brain style matching (optional)
+# mixtral is optional — PM Brain defaults to llama3
 ```
 
 ### Start Ollama with CORS enabled
@@ -128,7 +128,7 @@ extension/
 | Replies | `llama3` | Natural conversational output |
 | Categorization | `mistral` | Quick classification |
 | Action Items | `mistral` | Structured extraction |
-| PM Brain | `mixtral` | Best style matching |
+| PM Brain | `llama3` | Reuses reply model, no extra download |
 
 To change models, edit `MODELS` in `extension/background.js`.
 

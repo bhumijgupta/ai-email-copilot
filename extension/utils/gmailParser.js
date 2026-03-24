@@ -2,13 +2,136 @@
  * Gmail DOM parsing utilities
  */
 
+// Session-level cache for current user email to avoid repeated DOM queries
+let cachedCurrentUserEmail = null;
+
+/**
+ * Detect and cache the current Gmail user's email address
+ * Uses multiple heuristics: sender name "me" in thread, or account button aria-label
+ * @returns {string} Current user's email or "Unknown"
+ */
+function getCurrentUserEmail() {
+  if (cachedCurrentUserEmail) {
+    return cachedCurrentUserEmail;
+  }
+
+  try {
+    // Heuristic 1: Find a message where sender is "me" and extract email attribute
+    const messageContainers = document.querySelectorAll('[role="main"] .gs');
+    for (const container of messageContainers) {
+      const senderSpan = container.querySelector(".gD, [email]");
+      if (senderSpan) {
+        const senderName = (senderSpan.getAttribute("name") || senderSpan.innerText || "").trim();
+        const isMe = senderName.toLowerCase() === "me" || container.querySelector('.ip') !== null;
+        
+        if (isMe) {
+          const email = senderSpan.getAttribute("email");
+          if (email) {
+            cachedCurrentUserEmail = email.trim();
+            return cachedCurrentUserEmail;
+          }
+        }
+      }
+    }
+
+    // Heuristic 2: Parse Gmail account button aria-label (usually on top-right)
+    // Format: "Google Account: Name (email@example.com)"
+    const accountButtons = document.querySelectorAll('[aria-label*="Google Account"]');
+    for (const btn of accountButtons) {
+      const ariaLabel = btn.getAttribute("aria-label") || "";
+      const emailMatch = ariaLabel.match(/\(([^)]+@[^)]+)\)/);
+      if (emailMatch && emailMatch[1]) {
+        cachedCurrentUserEmail = emailMatch[1].trim();
+        return cachedCurrentUserEmail;
+      }
+    }
+
+    // Heuristic 3: Fall back to first sender email if nothing else works
+    const senderElements = document.querySelectorAll('[email]');
+    if (senderElements.length > 0) {
+      const email = senderElements[0].getAttribute("email");
+      if (email) {
+        cachedCurrentUserEmail = email.trim();
+        return cachedCurrentUserEmail;
+      }
+    }
+  } catch (error) {
+    console.error("Error detecting current user email:", error);
+  }
+
+  cachedCurrentUserEmail = "Unknown";
+  return cachedCurrentUserEmail;
+}
+
+/**
+ * Programmatically expand all collapsed messages in the thread
+ * Clicks collapsed message headers and "show trimmed content" buttons
+ * Returns a promise that resolves when expansion is complete
+ * @returns {Promise<void>}
+ */
+async function expandAllMessages() {
+  try {
+    const startTime = Date.now();
+    const maxWaitTime = 2000; // 2 second timeout
+    let previousBodyCount = 0;
+    let noChangeCount = 0;
+
+    while (Date.now() - startTime < maxWaitTime) {
+      // Click all collapsed message headers (data-message-id elements without visible .a3s)
+      const messageHeaders = document.querySelectorAll('[role="main"] [data-message-id]');
+      let clickedAny = false;
+
+      for (const header of messageHeaders) {
+        // Check if this message is collapsed (has data-message-id but no visible .a3s body)
+        const isCollapsed = !header.querySelector('.a3s');
+        if (isCollapsed) {
+          // Find a clickable element within this message container to expand it
+          const clickTarget = header.querySelector('[role="button"], .kv, .hX');
+          if (clickTarget) {
+            clickTarget.click();
+            clickedAny = true;
+          }
+        }
+      }
+
+      // Click all "Show trimmed content" buttons
+      const trimmedButtons = document.querySelectorAll('[aria-label="Show trimmed content"]');
+      for (const btn of trimmedButtons) {
+        btn.click();
+        clickedAny = true;
+      }
+
+      // Check if new bodies have appeared
+      const currentBodyCount = document.querySelectorAll('.a3s').length;
+      if (currentBodyCount > previousBodyCount) {
+        previousBodyCount = currentBodyCount;
+        noChangeCount = 0;
+      } else if (!clickedAny) {
+        noChangeCount++;
+        if (noChangeCount >= 2) {
+          // No changes for 2 iterations and nothing was clicked, expansion complete
+          break;
+        }
+      }
+
+      // Small delay to allow Gmail DOM to update
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+  } catch (error) {
+    console.error("Error expanding messages:", error);
+  }
+}
+
 /**
  * Extract full email thread text from Gmail DOM
  * Gmail message bodies are in divs with class .a3s
- * @returns {string} Full thread text
+ * First expands all collapsed messages to ensure complete thread content
+ * @returns {Promise<string>} Full thread text
  */
-function getEmailThread() {
+async function getEmailThread() {
   try {
+    await expandAllMessages();
+    
     const messageBodies = document.querySelectorAll(".a3s");
     if (messageBodies.length === 0) {
       return "No email thread found";
@@ -30,8 +153,8 @@ function getEmailThread() {
 }
 
 /**
- * Extract email metadata (subject, sender, recipients)
- * @returns {object} Email metadata
+ * Extract email metadata (subject, sender, recipients, current user)
+ * @returns {object} Email metadata including currentUser
  */
 function getEmailMetadata() {
   try {
@@ -39,27 +162,37 @@ function getEmailMetadata() {
     const subjectElement = document.querySelector('h2[data-subject-threading]');
     const subject = subjectElement ? subjectElement.innerText : "No subject";
 
-    // Sender info is in the email header
+    // Get current user email
+    const currentUser = getCurrentUserEmail();
+
+    // Collect all participant emails from thread
     const senderElements = document.querySelectorAll('[email]');
     const senders = Array.from(senderElements)
       .map(el => el.getAttribute("email"))
-      .filter(Boolean);
+      .filter(Boolean)
+      .filter((email, index, arr) => arr.indexOf(email) === index); // Deduplicate
 
+    // Separate current user from other participants
+    const participants = senders.filter(email => email !== currentUser);
     const from = senders[0] || "Unknown sender";
-    const to = senders.slice(1) || [];
+    const to = participants;
 
     return {
       subject,
+      currentUser,
       from,
       to,
+      participants: senders,
       timestamp: new Date().toISOString()
     };
   } catch (error) {
     console.error("Error extracting email metadata:", error);
     return {
       subject: "Unknown",
+      currentUser: "Unknown",
       from: "Unknown",
       to: [],
+      participants: [],
       timestamp: new Date().toISOString()
     };
   }
@@ -102,14 +235,19 @@ function insertIntoReply(text) {
 /**
  * Extract individual messages from the thread with sender info.
  * Returns an array of { sender, senderEmail, body, isMe } objects.
+ * First expands all collapsed messages to ensure all thread content is available.
  *
  * Gmail marks the logged-in user's messages with data-message-id and
  * shows "me" or the user's own address in the header.
  */
-function getIndividualMessages() {
+async function getIndividualMessages() {
   const results = [];
 
   try {
+    await expandAllMessages();
+    
+    const currentUser = getCurrentUserEmail();
+
     // Each top-level message container in a thread
     // Gmail wraps each message in a div with class "gs"
     const messageContainers = document.querySelectorAll('[role="main"] .gs');
@@ -135,9 +273,8 @@ function getIndividualMessages() {
           ? (senderSpan.getAttribute("email") || "").trim()
           : "";
 
-        // Gmail shows "me" as the name for your own sent messages
-        const isMe = senderName.toLowerCase() === "me" ||
-          container.querySelector('.ip') !== null; // .ip = "me" indicator
+        // Determine if this message is from the current user using email comparison
+        const isMe = senderEmail && currentUser && senderEmail.toLowerCase() === currentUser.toLowerCase();
 
         results.push({ sender: senderName, senderEmail, body: bodyText, isMe });
       });
