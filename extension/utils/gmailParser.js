@@ -64,52 +64,139 @@ function getCurrentUserEmail() {
 }
 
 /**
+ * Extract thread ID from the current Gmail URL
+ * URLs look like: https://mail.google.com/mail/u/0/#inbox/FMfcgz...
+ * @returns {string|null} The thread ID or null if not found
+ */
+function getThreadIdFromUrl() {
+  try {
+    const url = window.location.href;
+    // Match thread ID from URL hash (after the last /)
+    const match = url.match(/[#/]([a-zA-Z0-9]+)(?:[?#]|$)/);
+    if (match && match[1] && match[1].length > 10) {
+      return match[1];
+    }
+  } catch (error) {
+    console.error("Error extracting thread ID:", error);
+  }
+  return null;
+}
+
+/**
+ * Attempt to fetch all messages from Gmail's internal API
+ * This is more reliable than DOM clicking since it gets complete thread data
+ * @param {string} threadId - The Gmail thread ID
+ * @returns {Promise<Array>} Array of message objects or empty array if failed
+ */
+async function fetchThreadViaGmailApi(threadId) {
+  try {
+    // Gmail's internal API endpoint for fetching thread data
+    // This uses the same endpoint the web interface uses
+    const url = `https://mail.google.com/mail/u/0/?ui=2&ik=${getGmailIk()}&view=cv&th=${threadId}&attid=0&disp=safe&realattid=msg-f%3A${threadId}`;
+    
+    // Try alternative: Make a fetch request to Gmail's API
+    // Gmail might have a JSON API endpoint
+    const apiUrl = `https://mail.google.com/mail/u/0/inbox?ui=2&jsver=current&srv=&ik=${getGmailIk()}&t=${threadId}&view=cv&search=inbox`;
+    
+    // Note: Direct API requests may fail due to CORS or authentication
+    // For now, return empty to fall back to DOM parsing
+    return [];
+  } catch (error) {
+    console.error("Error fetching thread via API:", error);
+    return [];
+  }
+}
+
+/**
+ * Extract Gmail "ik" parameter needed for API calls
+ * The "ik" is included in Gmail's initialization
+ * @returns {string} The ik value or empty string
+ */
+function getGmailIk() {
+  try {
+    // Try to find ik in Gmail's page data
+    // Gmail stores it in various places; try to extract from page state
+    const scripts = document.querySelectorAll('script');
+    for (const script of scripts) {
+      if (script.textContent.includes('"ik":"')) {
+        const match = script.textContent.match(/"ik":"([^"]+)"/);
+        if (match) return match[1];
+      }
+    }
+  } catch (error) {
+    console.error("Error extracting Gmail ik:", error);
+  }
+  return "";
+}
+
+/**
  * Programmatically expand all collapsed messages in the thread
- * Clicks collapsed message headers to reveal full messages
- * Note: Does NOT expand "Show trimmed content" as trimmed content (quoted text)
- * can confuse AI models - we only need the actual message content
+ * Uses DOM clicking as it's more reliable for content scripts
  * @returns {Promise<void>}
  */
 async function expandAllMessages() {
   try {
     const startTime = Date.now();
-    const maxWaitTime = 2000; // 2 second timeout
+    const maxWaitTime = 3000; // 3 second timeout
     let previousBodyCount = 0;
     let noChangeCount = 0;
+    let clickIterations = 0;
+    const maxClickIterations = 5; // Prevent infinite loops
 
-    while (Date.now() - startTime < maxWaitTime) {
-      // Click all collapsed message headers (data-message-id elements without visible .a3s)
+    // First, try to collect all message IDs visible in the thread
+    const getAllMessageIds = () => {
+      const ids = [];
       const messageHeaders = document.querySelectorAll('[role="main"] [data-message-id]');
+      for (const header of messageHeaders) {
+        const id = header.getAttribute('data-message-id');
+        if (id) ids.push({ element: header, id });
+      }
+      return ids;
+    };
+
+    while (Date.now() - startTime < maxWaitTime && clickIterations < maxClickIterations) {
+      clickIterations++;
+      const messageData = getAllMessageIds();
       let clickedAny = false;
 
-      for (const header of messageHeaders) {
-        // Check if this message is collapsed (has data-message-id but no visible .a3s body)
-        const isCollapsed = !header.querySelector('.a3s');
+      // Click collapsed message headers
+      for (const { element } of messageData) {
+        const isCollapsed = !element.querySelector('.a3s');
         if (isCollapsed) {
-          // Find a clickable element within this message container to expand it
-          const clickTarget = header.querySelector('[role="button"], .kv, .hX');
-          if (clickTarget) {
+          // Try multiple selectors to find the clickable area
+          const clickTarget = 
+            element.querySelector('.hX') || // Common Gmail message header class
+            element.querySelector('[role="button"]') ||
+            element.querySelector('.kv') ||
+            element; // Fall back to clicking the element itself
+          
+          if (clickTarget && clickTarget.offsetHeight > 0) { // Only click visible elements
             clickTarget.click();
             clickedAny = true;
+            // Small delay between clicks
+            await new Promise(resolve => setTimeout(resolve, 100));
           }
         }
       }
 
-      // Check if new bodies have appeared
+      // Check if new bodies appeared
       const currentBodyCount = document.querySelectorAll('.a3s').length;
       if (currentBodyCount > previousBodyCount) {
         previousBodyCount = currentBodyCount;
         noChangeCount = 0;
+        console.log(`[Gmail Copilot] Expanded to ${currentBodyCount} messages`);
       } else if (!clickedAny) {
         noChangeCount++;
         if (noChangeCount >= 2) {
-          // No changes for 2 iterations and nothing was clicked, expansion complete
+          console.log(`[Gmail Copilot] Expansion complete: ${currentBodyCount} messages found`);
           break;
         }
+      } else {
+        noChangeCount = 0;
       }
 
-      // Small delay to allow Gmail DOM to update
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Wait for DOM to update
+      await new Promise(resolve => setTimeout(resolve, 250));
     }
   } catch (error) {
     console.error("Error expanding messages:", error);
@@ -124,9 +211,18 @@ async function expandAllMessages() {
  */
 async function getEmailThread() {
   try {
+    // Log initial state
+    const initialCount = document.querySelectorAll(".a3s").length;
+    console.log(`[Gmail Copilot] Initial message count: ${initialCount}`);
+    
+    // Expand all messages
     await expandAllMessages();
     
+    // Get all message bodies
     const messageBodies = document.querySelectorAll(".a3s");
+    const finalCount = messageBodies.length;
+    console.log(`[Gmail Copilot] Final message count: ${finalCount}`);
+    
     if (messageBodies.length === 0) {
       return "No email thread found";
     }
@@ -139,6 +235,7 @@ async function getEmailThread() {
       .filter(text => text.length > 0)
       .join("\n\n---\n\n");
 
+    console.log(`[Gmail Copilot] Extracted thread text length: ${threadText.length} characters`);
     return threadText;
   } catch (error) {
     console.error("Error extracting email thread:", error);
