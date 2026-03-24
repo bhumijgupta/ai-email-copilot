@@ -19,7 +19,7 @@ if (document.readyState === "loading") {
 }
 
 function initialize() {
-  console.log("[AI Copilot] Content script loaded on", window.location.href);
+  console.debug("[AI Copilot] Content script loaded on", window.location.href);
 
   injectStyles();
   injectPanel();
@@ -87,7 +87,7 @@ function injectActionBar() {
     { label: "Reply",     icon: "✏️",  action: "REPLY" },
     { label: "Categorise",icon: "🏷️", action: "CATEGORISE" },
     { label: "Actions",   icon: "✓",  action: "ACTION_ITEMS" },
-    { label: "Train Brain",icon: "🧠", action: "TRAIN_BRAIN" }
+    { label: "Your Brain", icon: "🧠", action: "TRAIN_BRAIN" }
   ];
 
   // Logo / title
@@ -403,9 +403,9 @@ function renderTrainBrainPanel(messages, metadata) {
 
   content.innerHTML = `
     <div class="ai-section">
-      <h3>🧠 Train PM Brain</h3>
+      <h3>🧠 Train Your Brain</h3>
       <p class="ai-train-subtitle">
-        Select messages from this thread to save to PM Brain memory.
+        Select messages from this thread to save to Your Brain memory.
         Your writing style will be learned from these examples.
       </p>
       <div class="ai-train-thread-info">
@@ -473,7 +473,7 @@ function renderTrainBrainPanel(messages, metadata) {
       ` : ""}
 
       <button id="ai-train-save" class="aib-btn aib-btn-primary ai-train-save-btn">
-        🧠 Save to PM Brain
+        🧠 Save to Your Brain
       </button>
     </div>
   `;
@@ -534,7 +534,7 @@ function saveSelectedToTrainBrain(selectedMessages, subject, container) {
     (response) => {
       if (chrome.runtime.lastError || !response || !response.success) {
         saveBtn.disabled = false;
-        saveBtn.textContent = "🧠 Save to PM Brain";
+        saveBtn.textContent = "🧠 Save to Your Brain";
         showNotification(response?.error || "Failed to save", "error");
         return;
       }
@@ -543,15 +543,15 @@ function saveSelectedToTrainBrain(selectedMessages, subject, container) {
         <div class="ai-train-success">
           <div class="ai-train-success-icon">🧠</div>
           <h3>Brain Updated!</h3>
-          <p>${response.savedCount} message${response.savedCount !== 1 ? "s" : ""} saved to PM Brain.</p>
+          <p>${response.savedCount} message${response.savedCount !== 1 ? "s" : ""} saved to Your Brain.</p>
           <p class="ai-muted">Total emails in memory: ${response.totalEmails}</p>
           <p class="ai-muted" style="margin-top:12px">
-            PM Brain will use these examples to match your writing style in future replies.
+            Your Brain will use these examples to match your writing style in future replies.
           </p>
         </div>
       `;
 
-      showNotification(`${response.savedCount} message(s) saved to PM Brain`, "success");
+      showNotification(`${response.savedCount} message(s) saved to Your Brain`, "success");
     }
   );
 }

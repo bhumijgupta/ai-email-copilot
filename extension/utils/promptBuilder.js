@@ -1,10 +1,14 @@
 /**
- * Prompt templates for various AI tasks
+ * Prompt templates for various AI tasks.
+ * Every prompt mandates a JSON-only response so parsing is deterministic.
  */
 
+const SYSTEM_PERSONA = "You are a highly intelligent email assistant. You help the user understand, respond to, and manage their emails effectively.";
+const JSON_MANDATE = "IMPORTANT: You MUST respond with valid JSON only. No markdown, no explanation, no text outside the JSON object.";
+
 function buildSummaryPrompt(thread, currentUser = "Unknown") {
-  const userContext = currentUser && currentUser !== "Unknown" ? `\nYou are analyzing emails for: ${currentUser}` : "";
-  return `You are a product manager assistant. Analyze this email thread and provide:
+  const userContext = currentUser && currentUser !== "Unknown" ? `\nThe current user is: ${currentUser}` : "";
+  return `${SYSTEM_PERSONA} Analyze this email thread and provide:
 
 1. TL;DR: A one-sentence summary
 2. Key Decisions: Main decisions mentioned or implied
@@ -14,6 +18,7 @@ function buildSummaryPrompt(thread, currentUser = "Unknown") {
 Email Thread:
 ${thread}
 
+${JSON_MANDATE}
 Respond in this exact JSON format:
 {
   "tldr": "string",
@@ -31,9 +36,9 @@ function buildReplyPrompt(summary, tone = "professional", currentUser = "Unknown
     detailed: "thorough and detailed"
   };
 
-  const userContext = currentUser && currentUser !== "Unknown" ? `You are replying on behalf of: ${currentUser}\n\n` : "";
+  const userContext = currentUser && currentUser !== "Unknown" ? `You are drafting a reply on behalf of: ${currentUser}\n\n` : "";
 
-  return `${userContext}You are a product manager assistant. Draft a reply to this email thread.
+  return `${userContext}${SYSTEM_PERSONA} Draft a reply to this email thread.
 
 Thread Summary:
 ${summary}
@@ -46,19 +51,24 @@ Guidelines:
 - Keep it concise (2-3 paragraphs max)
 - Match the conversation tone
 
-Provide only the reply text, no other formatting.`;
+${JSON_MANDATE}
+Respond in this exact JSON format:
+{
+  "reply": "the full reply text here"
+}`;
 }
 
 function buildCategoryPrompt(email) {
-  return `Categorize this email into ONE of the following categories:
+  return `${SYSTEM_PERSONA} Categorize this email into ONE of the following categories:
 - Bug Report
-- Vendor Query
-- Pricing
-- Onboarding
-- Internal Update
-- Meeting/Calendar
+- Request
+- Update / FYI
+- Meeting / Calendar
 - Action Required
-- FYI
+- Feedback
+- Introduction / Networking
+- Newsletter / Promotional
+- Personal
 - Other
 
 Also provide a confidence score from 0-100.
@@ -66,6 +76,7 @@ Also provide a confidence score from 0-100.
 Email:
 ${email}
 
+${JSON_MANDATE}
 Respond in this exact JSON format:
 {
   "category": "string",
@@ -74,8 +85,8 @@ Respond in this exact JSON format:
 }
 
 function buildActionPrompt(thread, currentUser = "Unknown") {
-  const userContext = currentUser && currentUser !== "Unknown" ? `\nCurrent user email: ${currentUser}` : "";
-  return `Extract action items from this email thread. For each action item, provide:
+  const userContext = currentUser && currentUser !== "Unknown" ? `\nThe current user is: ${currentUser}` : "";
+  return `${SYSTEM_PERSONA} Extract action items from this email thread. For each action item, provide:
 - Task description
 - Owner (person responsible, if mentioned)
 - Priority (Low, Medium, High)${userContext}
@@ -83,6 +94,7 @@ function buildActionPrompt(thread, currentUser = "Unknown") {
 Email Thread:
 ${thread}
 
+${JSON_MANDATE}
 Respond in this exact JSON format:
 {
   "actionItems": [
@@ -95,8 +107,8 @@ Respond in this exact JSON format:
 }`;
 }
 
-function buildPMBrainPrompt(examples, summary) {
-  return `You are a product manager assistant that writes in a specific user's style.
+function buildYourBrainPrompt(examples, summary) {
+  return `${SYSTEM_PERSONA} You write in a specific user's style.
 
 Examples of the user's past email writing:
 ${examples}
@@ -112,11 +124,15 @@ Guidelines:
 - Keep sentence length and structure consistent
 - Match their level of formality
 
-Provide only the reply text, no other formatting.`;
+${JSON_MANDATE}
+Respond in this exact JSON format:
+{
+  "reply": "the full reply text here"
+}`;
 }
 
 function buildRefineReplyPrompt(originalReply, feedback, threadContext) {
-  return `You are a product manager assistant. You previously drafted an email reply, and the user wants changes.
+  return `${SYSTEM_PERSONA} You previously drafted an email reply, and the user wants changes.
 
 Original reply you drafted:
 ${originalReply}
@@ -127,7 +143,11 @@ ${feedback}
 ${threadContext ? `Original email thread for context:\n${threadContext}\n` : ""}
 Rewrite the reply incorporating the user's feedback. Keep the same general intent but apply the requested changes.
 
-Provide only the updated reply text, no other formatting or explanation.`;
+${JSON_MANDATE}
+Respond in this exact JSON format:
+{
+  "reply": "the full updated reply text here"
+}`;
 }
 
 /**

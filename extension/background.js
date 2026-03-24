@@ -15,7 +15,7 @@ const MODELS = {
   REPLY: "llama3",
   CATEGORY: "mistral",
   ACTIONS: "mistral",
-  PM_BRAIN: "llama3"
+  YOUR_BRAIN: "llama3"
 };
 
 // Listen for messages from content script
@@ -46,8 +46,8 @@ async function handleMessage(request, sender, sendResponse) {
         await handleActionItems(request, sendResponse);
         break;
 
-      case "PM_BRAIN_REPLY":
-        await handlePMBrainReply(request, sendResponse);
+      case "YOUR_BRAIN_REPLY":
+        await handleYourBrainReply(request, sendResponse);
         break;
 
       case "REFINE_REPLY":
@@ -112,9 +112,12 @@ async function handleReply(request, sendResponse) {
     const prompt = buildReplyPrompt(request.summary, request.tone || "professional", request.currentUser);
     const response = await callOllama(prompt, MODELS.REPLY);
 
+    const parsed = parseJsonResponse(response);
+    const reply = parsed?.reply || response.trim();
+
     sendResponse({
       success: true,
-      reply: response.trim()
+      reply
     });
   } catch (error) {
     sendResponse({
@@ -183,29 +186,31 @@ async function handleActionItems(request, sendResponse) {
 }
 
 /**
- * Handle PM Brain reply generation
+ * Handle Your Brain reply generation
  */
-async function handlePMBrainReply(request, sendResponse) {
+async function handleYourBrainReply(request, sendResponse) {
   try {
-    const pmBrainEnabled = await isPMBrainEnabled();
-    if (!pmBrainEnabled) {
+    const brainEnabled = await isYourBrainEnabled();
+    if (!brainEnabled) {
       // Fallback to regular reply
       const prompt = buildReplyPrompt(request.summary, request.tone || "professional");
       const response = await callOllama(prompt, MODELS.REPLY);
+      const parsed = parseJsonResponse(response);
       sendResponse({
         success: true,
-        reply: response.trim()
+        reply: parsed?.reply || response.trim()
       });
       return;
     }
 
-    const examples = await getPMBrainExamples();
-    const prompt = buildPMBrainPrompt(examples, request.summary);
-    const response = await callOllama(prompt, MODELS.PM_BRAIN);
+    const examples = await getYourBrainExamples();
+    const prompt = buildYourBrainPrompt(examples, request.summary);
+    const response = await callOllama(prompt, MODELS.YOUR_BRAIN);
 
+    const parsed = parseJsonResponse(response);
     sendResponse({
       success: true,
-      reply: response.trim()
+      reply: parsed?.reply || response.trim()
     });
   } catch (error) {
     sendResponse({
@@ -226,9 +231,10 @@ async function handleRefineReply(request, sendResponse) {
       request.threadContext || ""
     );
     const response = await callOllama(prompt, MODELS.REPLY);
-    const refined = response.trim();
+    const parsed = parseJsonResponse(response);
+    const refined = parsed?.reply || response.trim();
 
-    // Save the edit to PM Brain so it learns from corrections
+    // Save the edit to Your Brain so it learns from corrections
     try {
       await saveEditedResponse(request.originalReply, refined);
     } catch (_) {
@@ -248,7 +254,7 @@ async function handleRefineReply(request, sendResponse) {
 }
 
 /**
- * Save messages from the current thread to PM Brain memory
+ * Save messages from the current thread to Your Brain memory
  */
 async function handleTrainBrain(request, sendResponse) {
   try {
@@ -303,7 +309,7 @@ async function handleCheckOllama(sendResponse) {
 }
 
 /**
- * Get PM Brain memory statistics
+ * Get Your Brain memory statistics
  */
 async function handleGetMemoryStats(sendResponse) {
   try {

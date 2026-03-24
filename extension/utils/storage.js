@@ -1,11 +1,11 @@
 /**
- * Chrome storage wrapper for PM Brain (user's writing style memory)
+ * Chrome storage wrapper for Your Brain (user's writing style memory)
  */
 
 const STORAGE_KEYS = {
-  PAST_EMAILS: "pm_brain_past_emails",
-  EDITED_RESPONSES: "pm_brain_edited_responses",
-  MEMORY_ENABLED: "pm_brain_enabled"
+  PAST_EMAILS: "your_brain_past_emails",
+  EDITED_RESPONSES: "your_brain_edited_responses",
+  MEMORY_ENABLED: "your_brain_enabled"
 };
 
 /**
@@ -113,7 +113,7 @@ async function getSimilarEmails(context) {
 }
 
 /**
- * Get PM Brain memory statistics
+ * Get Your Brain memory statistics
  * @returns {Promise<object>} Stats about stored memory
  */
 async function getMemoryStats() {
@@ -132,10 +132,10 @@ async function getMemoryStats() {
 }
 
 /**
- * Get examples for PM Brain prompt
+ * Get examples for Your Brain prompt
  * @returns {Promise<string>} Formatted examples of user's writing
  */
-async function getPMBrainExamples() {
+async function getYourBrainExamples() {
   return new Promise((resolve) => {
     chrome.storage.local.get([STORAGE_KEYS.PAST_EMAILS], (result) => {
       const emails = result[STORAGE_KEYS.PAST_EMAILS] || [];
@@ -151,21 +151,21 @@ async function getPMBrainExamples() {
 }
 
 /**
- * Toggle PM Brain on/off
- * @param {boolean} enabled - Whether to enable PM Brain
+ * Toggle Your Brain on/off
+ * @param {boolean} enabled - Whether to enable Your Brain
  * @returns {Promise<void>}
  */
-async function setPMBrainEnabled(enabled) {
+async function setYourBrainEnabled(enabled) {
   return new Promise((resolve) => {
     chrome.storage.local.set({ [STORAGE_KEYS.MEMORY_ENABLED]: enabled }, resolve);
   });
 }
 
 /**
- * Check if PM Brain is enabled
+ * Check if Your Brain is enabled
  * @returns {Promise<boolean>} True if enabled
  */
-async function isPMBrainEnabled() {
+async function isYourBrainEnabled() {
   return new Promise((resolve) => {
     chrome.storage.local.get([STORAGE_KEYS.MEMORY_ENABLED], (result) => {
       resolve(result[STORAGE_KEYS.MEMORY_ENABLED] !== false);
@@ -174,7 +174,7 @@ async function isPMBrainEnabled() {
 }
 
 /**
- * Clear all PM Brain memory
+ * Clear all Your Brain memory
  * @returns {Promise<void>}
  */
 async function clearMemory() {

@@ -5,11 +5,13 @@ A Chrome Extension that enhances Gmail with AI-powered email analysis — all ru
 ## Features
 
 - **Thread Summarization** — TL;DR, key decisions, open questions, and action items
-- **Reply Generation** — Draft professional replies with tone control and iterative refinement
-- **Categorization** — Classify emails (Bug, Vendor Query, Pricing, Onboarding, Internal, etc.)
+- **Reply Generation** — Draft replies with tone control and iterative refinement
+- **Categorization** — Classify emails (Bug Report, Request, Action Required, Meeting, etc.)
 - **Action Item Extraction** — Tasks with owner and priority levels
-- **PM Brain** — Learns your writing style from real emails to personalize future replies
-- **Train from Threads** — Feed existing Gmail threads into PM Brain to build your style profile
+- **Your Brain** — Learns your writing style from real emails to personalize future replies
+- **Train from Threads** — Feed existing Gmail threads into Your Brain to build your style profile
+- **Auto-expand Threads** — Collapsed messages are expanded automatically so all emails in a thread are analyzed
+- **User-aware Context** — Detects who you are in multi-user threads for accurate replies and summaries
 
 ## Prerequisites
 
@@ -18,9 +20,8 @@ A Chrome Extension that enhances Gmail with AI-powered email analysis — all ru
 Download from [ollama.ai](https://ollama.ai), then pull the required models:
 
 ```bash
-ollama pull llama3        # Reply generation
+ollama pull llama3        # Reply generation + Your Brain
 ollama pull mistral       # Summarization, categorization, actions
-# mixtral is optional — PM Brain defaults to llama3
 ```
 
 ### Start Ollama with CORS enabled
@@ -62,7 +63,7 @@ launchctl setenv OLLAMA_ORIGINS "*"
    | **Reply** | AI-drafted reply with refinement options |
    | **Categorise** | Auto-classify the email with confidence score |
    | **Actions** | Extract action items with owner and priority |
-   | **Train Brain** | Save your messages from this thread to PM Brain |
+   | **Your Brain** | Save your messages from this thread to train your style |
 
 3. Results appear in a slide-out panel on the right
 4. **Copy** results or **Insert into Reply** to paste directly into Gmail's compose box
@@ -72,14 +73,14 @@ launchctl setenv OLLAMA_ORIGINS "*"
 After generating a reply, you can refine it:
 - Type feedback in the input field (e.g., "make it shorter", "mention the Friday deadline")
 - Or click a quick-refine chip (Shorter, More formal, More casual, etc.)
-- Each refinement is saved to PM Brain to improve future suggestions
+- Each refinement is saved to Your Brain to improve future suggestions
 
-### Training PM Brain
+### Training Your Brain
 
-Click **Train Brain** on any thread to:
+Click **Your Brain** on any thread to:
 1. See all messages split into "Your messages" and "Others"
 2. Select which messages to save (your messages are pre-selected)
-3. Click **Save to PM Brain** to store them as writing style examples
+3. Click **Save to Your Brain** to store them as writing style examples
 
 ## Architecture
 
@@ -116,8 +117,8 @@ extension/
 └── utils/
     ├── ollamaClient.js         # Ollama API client
     ├── promptBuilder.js        # AI prompt templates
-    ├── gmailParser.js          # Gmail DOM parsing
-    └── storage.js              # PM Brain storage
+    ├── gmailParser.js          # Gmail DOM parsing & thread expansion
+    └── storage.js              # Your Brain storage
 ```
 
 ### Models
@@ -128,7 +129,7 @@ extension/
 | Replies | `llama3` | Natural conversational output |
 | Categorization | `mistral` | Quick classification |
 | Action Items | `mistral` | Structured extraction |
-| PM Brain | `llama3` | Reuses reply model, no extra download |
+| Your Brain | `llama3` | Reuses reply model, no extra download |
 
 To change models, edit `MODELS` in `extension/background.js`.
 
@@ -159,8 +160,8 @@ Edit `version` in `extension/manifest.json`, then run `./build.sh` again:
 - **Read-only Gmail access** — The extension only reads email content from the DOM
 - **No authentication** — No Google OAuth, no API keys, no accounts
 - **No tracking** — Zero analytics, telemetry, or data collection
-- **PM Brain is local** — Writing style examples stored in `chrome.storage.local` only
-- **You control your data** — Clear PM Brain memory anytime from the extension popup
+- **Your Brain is local** — Writing style examples stored in `chrome.storage.local` only
+- **You control your data** — Clear Your Brain memory anytime from the extension popup
 
 ## Troubleshooting
 
@@ -200,7 +201,7 @@ ollama pull llama3
 ### Debugging
 
 - **Service worker logs**: `chrome://extensions` → AI Email Copilot → "Inspect views: service worker"
-- **Content script logs**: Open DevTools console on the Gmail tab
+- **Content script logs**: Open DevTools console on the Gmail tab (filter by `[Gmail Copilot]` for extension debug logs)
 - **Popup logs**: Right-click the extension icon → Inspect
 
 ### Local testing without zip

@@ -6,11 +6,11 @@ document.addEventListener("DOMContentLoaded", initialize);
 
 function initialize() {
   checkOllamaStatus();
-  loadPMBrainState();
+  loadYourBrainState();
   loadMemoryStats();
 
   // Event listeners
-  document.getElementById("pmbrain-toggle").addEventListener("change", togglePMBrain);
+  document.getElementById("your-brain-toggle").addEventListener("change", toggleYourBrain);
   document.getElementById("improve-with-style").addEventListener("click", improveWithStyle);
   document.getElementById("reset-memory").addEventListener("click", resetMemory);
 
@@ -54,22 +54,22 @@ function checkOllamaStatus() {
 }
 
 /**
- * Toggle PM Brain setting
+ * Toggle Your Brain setting
  */
-function togglePMBrain(event) {
+function toggleYourBrain(event) {
   const enabled = event.target.checked;
-  chrome.storage.local.set({ pm_brain_enabled: enabled }, () => {
-    console.log("PM Brain", enabled ? "enabled" : "disabled");
+  chrome.storage.local.set({ your_brain_enabled: enabled }, () => {
+    console.debug("Your Brain", enabled ? "enabled" : "disabled");
   });
 }
 
 /**
- * Load PM Brain toggle state
+ * Load Your Brain toggle state
  */
-function loadPMBrainState() {
-  chrome.storage.local.get(["pm_brain_enabled"], (result) => {
-    const toggle = document.getElementById("pmbrain-toggle");
-    toggle.checked = result.pm_brain_enabled !== false;
+function loadYourBrainState() {
+  chrome.storage.local.get(["your_brain_enabled"], (result) => {
+    const toggle = document.getElementById("your-brain-toggle");
+    toggle.checked = result.your_brain_enabled !== false;
   });
 }
 
@@ -86,16 +86,16 @@ function loadMemoryStats() {
 }
 
 /**
- * Improve with my style - manually trigger PM Brain
+ * Improve with my style - manually trigger Your Brain
  */
 function improveWithStyle() {
   alert(
-    "This will use your past emails to improve AI replies. Make sure to enable PM Brain and send some emails for it to learn from."
+    "This will use your past emails to improve AI replies. Make sure to enable Your Brain and train it from some email threads first."
   );
 }
 
 /**
- * Clear PM Brain memory
+ * Clear Your Brain memory
  */
 function resetMemory() {
   if (
@@ -104,7 +104,7 @@ function resetMemory() {
     )
   ) {
     chrome.storage.local.remove(
-      ["pm_brain_past_emails", "pm_brain_edited_responses"],
+      ["your_brain_past_emails", "your_brain_edited_responses"],
       () => {
         alert("Memory cleared");
         loadMemoryStats();
