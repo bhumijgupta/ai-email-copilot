@@ -4,7 +4,14 @@
  */
 
 const SYSTEM_PERSONA = "You are a highly intelligent email assistant. You help the user understand, respond to, and manage their emails effectively.";
-const JSON_MANDATE = "IMPORTANT: You MUST respond with valid JSON only. No markdown, no explanation, no text outside the JSON object.";
+const JSON_MANDATE = `CRITICAL OUTPUT RULES — FOLLOW EXACTLY:
+1. Your ENTIRE response must be a single valid JSON object. Nothing else.
+2. No markdown fences, no backticks, no explanatory text before or after the JSON.
+3. Every opened { must have a matching }. Every opened [ must have a matching ].
+4. All string values must be properly quoted and escaped.
+5. No trailing commas after the last item in an object or array.
+6. Before responding, mentally validate that your JSON is complete and parseable.
+7. If in doubt, keep values shorter rather than risk truncation.`;
 
 function buildSummaryPrompt(thread, currentUser = "Unknown") {
   const userContext = currentUser && currentUser !== "Unknown" ? `\nThe current user is: ${currentUser}` : "";
@@ -19,13 +26,8 @@ Email Thread:
 ${thread}
 
 ${JSON_MANDATE}
-Respond in this exact JSON format:
-{
-  "tldr": "string",
-  "keyDecisions": ["string"],
-  "openQuestions": ["string"],
-  "actionItems": ["string"]
-}`;
+Respond in this EXACT JSON structure — no other text:
+{"tldr":"string","keyDecisions":["string"],"openQuestions":["string"],"actionItems":["string"]}`;
 }
 
 function buildReplyPrompt(summary, tone = "professional", currentUser = "Unknown") {
@@ -52,10 +54,8 @@ Guidelines:
 - Match the conversation tone
 
 ${JSON_MANDATE}
-Respond in this exact JSON format:
-{
-  "reply": "the full reply text here"
-}`;
+Respond in this EXACT JSON structure — no other text:
+{"reply":"the full reply text here"}`;
 }
 
 function buildCategoryPrompt(email) {
@@ -77,11 +77,8 @@ Email:
 ${email}
 
 ${JSON_MANDATE}
-Respond in this exact JSON format:
-{
-  "category": "string",
-  "confidence": number
-}`;
+Respond in this EXACT JSON structure — no other text:
+{"category":"string","confidence":number}`;
 }
 
 function buildActionPrompt(thread, currentUser = "Unknown") {
@@ -95,27 +92,20 @@ Email Thread:
 ${thread}
 
 ${JSON_MANDATE}
-Respond in this exact JSON format:
-{
-  "actionItems": [
-    {
-      "task": "string",
-      "owner": "string or null",
-      "priority": "Low" | "Medium" | "High"
-    }
-  ]
-}`;
+Respond in this EXACT JSON structure — no other text:
+{"actionItems":[{"task":"string","owner":"string or null","priority":"Low|Medium|High"}]}`;
 }
 
 function buildYourBrainPrompt(examples, summary) {
   return `${SYSTEM_PERSONA} You write in a specific user's style.
 
-Examples of the user's past email writing:
+Below are examples of the user's writing. "Writing samples" are real emails they wrote. "Style corrections" show cases where they revised an AI draft — always prefer the "Preferred" version as the target style.
+
 ${examples}
 
-Now draft a reply in the SAME tone and style as above. Match their personality, sentence structure, and level of formality.
+Now draft a reply in the SAME tone and style as the user. Match their personality, sentence structure, and level of formality.
 
-Current email thread summary to reply to:
+Current email thread to reply to:
 ${summary}
 
 Guidelines:
@@ -123,12 +113,11 @@ Guidelines:
 - Use similar vocabulary and tone
 - Keep sentence length and structure consistent
 - Match their level of formality
+- If style corrections are provided, follow the patterns shown in the "Preferred" versions
 
 ${JSON_MANDATE}
-Respond in this exact JSON format:
-{
-  "reply": "the full reply text here"
-}`;
+Respond in this EXACT JSON structure — no other text:
+{"reply":"the full reply text here"}`;
 }
 
 function buildRefineReplyPrompt(originalReply, feedback, threadContext) {
@@ -144,27 +133,54 @@ ${threadContext ? `Original email thread for context:\n${threadContext}\n` : ""}
 Rewrite the reply incorporating the user's feedback. Keep the same general intent but apply the requested changes.
 
 ${JSON_MANDATE}
-Respond in this exact JSON format:
-{
-  "reply": "the full updated reply text here"
-}`;
+Respond in this EXACT JSON structure — no other text:
+{"reply":"the full updated reply text here"}`;
 }
 
 /**
- * Parse JSON from model response with error handling
- * @param {string} response - Raw model response
- * @returns {object} Parsed JSON object
+ * Parse JSON from model response.
+ * Strips markdown fences and surrounding prose, then finds the first
+ * balanced top-level JSON object via brace-counting (not a greedy regex).
  */
 function parseJsonResponse(response) {
-  try {
-    // Try to extract JSON from response (in case model adds extra text)
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-    return JSON.parse(response);
-  } catch (error) {
-    console.error("Failed to parse JSON response:", error);
+  if (!response || typeof response !== "string") return null;
+
+  let text = response.trim();
+
+  // Strip markdown fences (```json ... ```)
+  text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+
+  // Fast path: response is already clean JSON
+  try { return JSON.parse(text); } catch (_) {}
+
+  // Find the first balanced { ... } in the string
+  const start = text.indexOf("{");
+  if (start === -1) {
+    console.debug("[AI Copilot] No JSON object found in response:", text.substring(0, 200));
     return null;
   }
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (escaped)           { escaped = false; continue; }
+    if (ch === "\\")       { escaped = true;  continue; }
+    if (ch === '"')        { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === "{") depth++;
+    if (ch === "}") depth--;
+    if (depth === 0) {
+      try {
+        return JSON.parse(text.substring(start, i + 1));
+      } catch (err) {
+        console.debug("[AI Copilot] Found balanced braces but JSON invalid:", err.message);
+        return null;
+      }
+    }
+  }
+
+  console.debug("[AI Copilot] Unbalanced JSON in response:", text.substring(0, 200));
+  return null;
 }

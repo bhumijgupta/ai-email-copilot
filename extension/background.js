@@ -105,12 +105,23 @@ async function handleSummarize(request, sendResponse) {
 }
 
 /**
- * Handle reply generation
+ * Handle reply generation.
+ * Automatically uses Your Brain style if enabled and has training data.
  */
 async function handleReply(request, sendResponse) {
   try {
-    const prompt = buildReplyPrompt(request.summary, request.tone || "professional", request.currentUser);
-    const response = await callOllama(prompt, MODELS.REPLY);
+    const brainEnabled = await isYourBrainEnabled();
+    const examples = brainEnabled ? await getYourBrainExamples() : "";
+    const hasExamples = examples && examples !== "No past emails found.";
+
+    let response;
+    if (hasExamples) {
+      const prompt = buildYourBrainPrompt(examples, request.summary);
+      response = await callOllama(prompt, MODELS.YOUR_BRAIN);
+    } else {
+      const prompt = buildReplyPrompt(request.summary, request.tone || "professional", request.currentUser);
+      response = await callOllama(prompt, MODELS.REPLY);
+    }
 
     const parsed = parseJsonResponse(response);
     const reply = parsed?.reply || response.trim();
@@ -186,38 +197,11 @@ async function handleActionItems(request, sendResponse) {
 }
 
 /**
- * Handle Your Brain reply generation
+ * Handle explicit YOUR_BRAIN_REPLY — delegates to handleReply which
+ * automatically uses Your Brain when enabled.
  */
 async function handleYourBrainReply(request, sendResponse) {
-  try {
-    const brainEnabled = await isYourBrainEnabled();
-    if (!brainEnabled) {
-      // Fallback to regular reply
-      const prompt = buildReplyPrompt(request.summary, request.tone || "professional");
-      const response = await callOllama(prompt, MODELS.REPLY);
-      const parsed = parseJsonResponse(response);
-      sendResponse({
-        success: true,
-        reply: parsed?.reply || response.trim()
-      });
-      return;
-    }
-
-    const examples = await getYourBrainExamples();
-    const prompt = buildYourBrainPrompt(examples, request.summary);
-    const response = await callOllama(prompt, MODELS.YOUR_BRAIN);
-
-    const parsed = parseJsonResponse(response);
-    sendResponse({
-      success: true,
-      reply: parsed?.reply || response.trim()
-    });
-  } catch (error) {
-    sendResponse({
-      success: false,
-      error: error.message
-    });
-  }
+  return handleReply(request, sendResponse);
 }
 
 /**

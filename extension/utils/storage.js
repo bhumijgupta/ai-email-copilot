@@ -132,21 +132,40 @@ async function getMemoryStats() {
 }
 
 /**
- * Get examples for Your Brain prompt
+ * Get examples for Your Brain prompt.
+ * Combines past emails (writing samples) with edited responses
+ * (style corrections the user made to AI drafts).
  * @returns {Promise<string>} Formatted examples of user's writing
  */
 async function getYourBrainExamples() {
   return new Promise((resolve) => {
-    chrome.storage.local.get([STORAGE_KEYS.PAST_EMAILS], (result) => {
-      const emails = result[STORAGE_KEYS.PAST_EMAILS] || [];
+    chrome.storage.local.get(
+      [STORAGE_KEYS.PAST_EMAILS, STORAGE_KEYS.EDITED_RESPONSES],
+      (result) => {
+        const emails = result[STORAGE_KEYS.PAST_EMAILS] || [];
+        const edits = result[STORAGE_KEYS.EDITED_RESPONSES] || [];
 
-      const examples = emails
-        .slice(0, 10)
-        .map(email => `Subject: ${email.subject}\n${email.body}`)
-        .join("\n\n---\n\n");
+        const parts = [];
 
-      resolve(examples || "No past emails found.");
-    });
+        const emailExamples = emails.slice(0, 8);
+        if (emailExamples.length > 0) {
+          parts.push("=== Writing samples ===");
+          emailExamples.forEach(email => {
+            parts.push(`Subject: ${email.subject}\n${email.body}`);
+          });
+        }
+
+        const editExamples = edits.slice(0, 5);
+        if (editExamples.length > 0) {
+          parts.push("=== Style corrections (user preferred the revised version) ===");
+          editExamples.forEach(edit => {
+            parts.push(`Draft: ${edit.original}\nPreferred: ${edit.edited}`);
+          });
+        }
+
+        resolve(parts.length > 0 ? parts.join("\n\n---\n\n") : "No past emails found.");
+      }
+    );
   });
 }
 
