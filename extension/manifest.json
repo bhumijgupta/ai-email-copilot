@@ -35,6 +35,7 @@
         "https://mail.google.com/*"
       ],
       "js": [
+        "utils/gmailApiInterceptor.js",
         "utils/ollamaClient.js",
         "utils/promptBuilder.js",
         "utils/gmailParser.js",
@@ -45,7 +46,7 @@
       "css": [
         "ui/panel.css"
       ],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ]
 }

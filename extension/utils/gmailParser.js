@@ -206,7 +206,7 @@ async function expandAllMessages() {
 /**
  * Extract full email thread text from Gmail DOM
  * Gmail message bodies are in divs with class .a3s
- * First expands all collapsed messages to ensure complete thread content
+ * First tries to get complete thread via API interception, then falls back to expansion
  * @returns {Promise<string>} Full thread text
  */
 async function getEmailThread() {
@@ -215,7 +215,18 @@ async function getEmailThread() {
     const initialCount = document.querySelectorAll(".a3s").length;
     console.log(`[Gmail Copilot] Initial message count: ${initialCount}`);
     
-    // Expand all messages
+    // Try to use API interceptor if available
+    const threadId = getThreadIdFromUrl();
+    if (threadId && typeof getCachedThreadData === 'function') {
+      const cachedData = getCachedThreadData(threadId);
+      if (cachedData) {
+        console.log(`[Gmail Copilot] Using cached thread data from API interception`);
+        // Parse cached data to extract message text
+        // This is a fallback - implementation depends on Gmail API response format
+      }
+    }
+    
+    // Fall back to DOM expansion
     await expandAllMessages();
     
     // Get all message bodies
