@@ -65,8 +65,9 @@ function getCurrentUserEmail() {
 
 /**
  * Programmatically expand all collapsed messages in the thread
- * Clicks collapsed message headers and "show trimmed content" buttons
- * Returns a promise that resolves when expansion is complete
+ * Clicks collapsed message headers to reveal full messages
+ * Note: Does NOT expand "Show trimmed content" as trimmed content (quoted text)
+ * can confuse AI models - we only need the actual message content
  * @returns {Promise<void>}
  */
 async function expandAllMessages() {
@@ -92,13 +93,6 @@ async function expandAllMessages() {
             clickedAny = true;
           }
         }
-      }
-
-      // Click all "Show trimmed content" buttons
-      const trimmedButtons = document.querySelectorAll('[aria-label="Show trimmed content"]');
-      for (const btn of trimmedButtons) {
-        btn.click();
-        clickedAny = true;
       }
 
       // Check if new bodies have appeared
