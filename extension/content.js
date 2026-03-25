@@ -213,15 +213,18 @@ function renderPanelContent(action, response) {
 
 function renderSummary(container, summary) {
   const s = summary || {};
+  const points = Array.isArray(s.summary) ? s.summary : (s.tldr ? [s.tldr] : []);
   container.innerHTML = `
     <div class="ai-section">
       <div class="ai-section-header">
         <h3>Summary</h3>
       </div>
-      <div class="ai-card ai-card-tldr">
-        <div class="ai-card-label">TL;DR</div>
-        <p>${escapeHtml(s.tldr || "No summary available")}</p>
-      </div>
+      ${points.length > 0
+        ? `<div class="ai-card ai-card-tldr">
+            <div class="ai-card-label">Overview</div>
+            <ul>${points.map(p => `<li>${escapeHtml(p)}</li>`).join("")}</ul>
+          </div>`
+        : '<p class="ai-muted">No summary available.</p>'}
       ${renderList("Key decisions", s.keyDecisions)}
       ${renderList("Open questions", s.openQuestions)}
       ${renderList("Action items", s.actionItems)}
@@ -589,7 +592,8 @@ function renderList(title, items) {
 }
 
 function formatSummaryText(s) {
-  let text = `TL;DR: ${s.tldr || ""}\n`;
+  const points = Array.isArray(s.summary) ? s.summary : (s.tldr ? [s.tldr] : []);
+  let text = `Summary:\n${points.map(p => `- ${p}`).join("\n")}\n`;
   if (s.keyDecisions?.length)  text += `\nKey Decisions:\n${s.keyDecisions.map(d => `- ${d}`).join("\n")}`;
   if (s.openQuestions?.length)  text += `\nOpen Questions:\n${s.openQuestions.map(q => `- ${q}`).join("\n")}`;
   if (s.actionItems?.length)   text += `\nAction Items:\n${s.actionItems.map(a => `- ${a}`).join("\n")}`;

@@ -18,6 +18,53 @@ const MODELS = {
   YOUR_BRAIN: "llama3"
 };
 
+// JSON schemas for structured output (passed to Ollama's format parameter)
+const SCHEMAS = {
+  SUMMARY: {
+    type: "object",
+    properties: {
+      summary:       { type: "array", items: { type: "string" } },
+      keyDecisions:  { type: "array", items: { type: "string" } },
+      openQuestions:  { type: "array", items: { type: "string" } },
+      actionItems:   { type: "array", items: { type: "string" } }
+    },
+    required: ["summary", "keyDecisions", "openQuestions", "actionItems"]
+  },
+  REPLY: {
+    type: "object",
+    properties: {
+      reply: { type: "string" }
+    },
+    required: ["reply"]
+  },
+  CATEGORY: {
+    type: "object",
+    properties: {
+      category:   { type: "string" },
+      confidence: { type: "number" }
+    },
+    required: ["category", "confidence"]
+  },
+  ACTIONS: {
+    type: "object",
+    properties: {
+      actionItems: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            task:     { type: "string" },
+            owner:    { type: "string" },
+            priority: { type: "string" }
+          },
+          required: ["task", "priority"]
+        }
+      }
+    },
+    required: ["actionItems"]
+  }
+};
+
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   handleMessage(request, sender, sendResponse);
@@ -81,7 +128,7 @@ async function handleMessage(request, sender, sendResponse) {
 async function handleSummarize(request, sendResponse) {
   try {
     const prompt = buildSummaryPrompt(request.thread, request.currentUser);
-    const response = await callOllama(prompt, MODELS.SUMMARY);
+    const response = await callOllama(prompt, MODELS.SUMMARY, SCHEMAS.SUMMARY);
 
     const parsed = parseJsonResponse(response);
     if (!parsed) {
@@ -117,10 +164,10 @@ async function handleReply(request, sendResponse) {
     let response;
     if (hasExamples) {
       const prompt = buildYourBrainPrompt(examples, request.summary);
-      response = await callOllama(prompt, MODELS.YOUR_BRAIN);
+      response = await callOllama(prompt, MODELS.YOUR_BRAIN, SCHEMAS.REPLY);
     } else {
       const prompt = buildReplyPrompt(request.summary, request.tone || "professional", request.currentUser);
-      response = await callOllama(prompt, MODELS.REPLY);
+      response = await callOllama(prompt, MODELS.REPLY, SCHEMAS.REPLY);
     }
 
     const parsed = parseJsonResponse(response);
@@ -144,7 +191,7 @@ async function handleReply(request, sendResponse) {
 async function handleCategorize(request, sendResponse) {
   try {
     const prompt = buildCategoryPrompt(request.email);
-    const response = await callOllama(prompt, MODELS.CATEGORY);
+    const response = await callOllama(prompt, MODELS.CATEGORY, SCHEMAS.CATEGORY);
 
     const parsed = parseJsonResponse(response);
     if (!parsed) {
@@ -173,7 +220,7 @@ async function handleCategorize(request, sendResponse) {
 async function handleActionItems(request, sendResponse) {
   try {
     const prompt = buildActionPrompt(request.thread, request.currentUser);
-    const response = await callOllama(prompt, MODELS.ACTIONS);
+    const response = await callOllama(prompt, MODELS.ACTIONS, SCHEMAS.ACTIONS);
 
     const parsed = parseJsonResponse(response);
     if (!parsed || !parsed.actionItems) {
@@ -214,7 +261,7 @@ async function handleRefineReply(request, sendResponse) {
       request.feedback,
       request.threadContext || ""
     );
-    const response = await callOllama(prompt, MODELS.REPLY);
+    const response = await callOllama(prompt, MODELS.REPLY, SCHEMAS.REPLY);
     const parsed = parseJsonResponse(response);
     const refined = parsed?.reply || response.trim();
 

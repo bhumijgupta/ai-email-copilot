@@ -17,7 +17,7 @@ function buildSummaryPrompt(thread, currentUser = "Unknown") {
   const userContext = currentUser && currentUser !== "Unknown" ? `\nThe current user is: ${currentUser}` : "";
   return `${SYSTEM_PERSONA} Analyze this email thread and provide:
 
-1. TL;DR: A one-sentence summary
+1. Summary: 3-5 concise bullet points covering the most important information in the thread
 2. Key Decisions: Main decisions mentioned or implied
 3. Open Questions: Unresolved questions or ambiguities
 4. Action Items: Concrete tasks that need to be done${userContext}
@@ -27,7 +27,7 @@ ${thread}
 
 ${JSON_MANDATE}
 Respond in this EXACT JSON structure — no other text:
-{"tldr":"string","keyDecisions":["string"],"openQuestions":["string"],"actionItems":["string"]}`;
+{"summary":["string"],"keyDecisions":["string"],"openQuestions":["string"],"actionItems":["string"]}`;
 }
 
 function buildReplyPrompt(summary, tone = "professional", currentUser = "Unknown") {

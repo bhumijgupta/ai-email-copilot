@@ -16,26 +16,28 @@ const OLLAMA_BASE_URL = "http://localhost:11434";
 const TIMEOUT_MS = 120000;
 
 /**
- * Call Ollama API with the given prompt and model
+ * Call Ollama API with the given prompt and model.
  * @param {string} prompt - The prompt to send
- * @param {string} model - Model name (e.g., "llama3", "mistral", "mixtral")
+ * @param {string} model - Model name (e.g., "llama3", "mistral")
+ * @param {object} [format] - Optional JSON schema to enforce structured output
  * @returns {Promise<string>} The model's response text
  */
-async function callOllama(prompt, model = "llama3") {
+async function callOllama(prompt, model = "llama3", format = undefined) {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    const payload = { model, prompt, stream: false };
+    if (format) {
+      payload.format = format;
+    }
 
     const response = await fetch(`${OLLAMA_BASE_URL}/api/generate`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        model,
-        prompt,
-        stream: false
-      }),
+      body: JSON.stringify(payload),
       signal: controller.signal
     });
 
