@@ -1,0 +1,343 @@
+{
+  "fixtures": [
+    {
+      "id": "t1_meeting_invite",
+      "tier": 1,
+      "tierLabel": "Simple single-sender",
+      "description": "Single sender scheduling a meeting",
+      "currentUser": "alice@example.com",
+      "thread": "From: Bob <bob@example.com>\nDate: Mar 20, 2026\nSubject: Meeting Tomorrow\n\nHi Alice,\n\nLet's meet tomorrow at 3pm in Conference Room 201 to review the Q1 numbers.\n\nPlease bring the revenue spreadsheet.\n\nThanks,\nBob",
+      "expected": {
+        "summary": {
+          "mustInclude": ["meeting", "3pm", "Conference Room 201", "Q1", "revenue spreadsheet"],
+          "bulletCountRange": [2, 5]
+        },
+        "category": {
+          "expected": "Meeting / Calendar",
+          "acceptableAlternatives": ["Action Required"]
+        },
+        "actionItems": {
+          "items": [
+            {
+              "taskKeywords": ["bring", "revenue spreadsheet"],
+              "expectedOwner": "Alice",
+              "expectedPriority": "Medium"
+            }
+          ],
+          "countRange": [1, 2]
+        },
+        "reply": {
+          "mustAddress": ["confirm attendance", "spreadsheet"],
+          "forbiddenContent": ["wrong name", "unrelated topic"],
+          "toneToTest": "professional"
+        }
+      }
+    },
+    {
+      "id": "t1_fyi_update",
+      "tier": 1,
+      "tierLabel": "Simple single-sender",
+      "description": "Newsletter/FYI email about product launch",
+      "currentUser": "alice@example.com",
+      "thread": "From: Marketing <marketing@company.com>\nDate: Mar 19, 2026\nSubject: New Product Launch - FYI\n\nTeam,\n\nJust wanted to give you a heads up that our new mobile app launches next week on March 28th. The app will be available on iOS and Android.\n\nFYI only - no action needed from your side.\n\nBest,\nMarketing Team",
+      "expected": {
+        "summary": {
+          "mustInclude": ["product launch", "March 28", "mobile app", "iOS", "Android"],
+          "bulletCountRange": [1, 4]
+        },
+        "category": {
+          "expected": "Update / FYI",
+          "acceptableAlternatives": ["Newsletter / Promotional"]
+        },
+        "actionItems": {
+          "items": [],
+          "countRange": [0, 0]
+        },
+        "reply": {
+          "mustAddress": ["acknowledge"],
+          "forbiddenContent": ["action item", "request"],
+          "toneToTest": "professional"
+        }
+      }
+    },
+    {
+      "id": "t2_project_handoff",
+      "tier": 2,
+      "tierLabel": "Two-party conversation",
+      "description": "Alice asks Bob to take over a task, Bob asks clarifying questions",
+      "currentUser": "alice@example.com",
+      "thread": "From: Alice <alice@example.com>\nDate: Mar 18, 2026\nSubject: Need to hand off project management\n\nHi Bob,\n\nI'm swamped with the new initiative and need to hand off the client dashboard project to you. It's due on April 5th. The client has requested custom analytics widgets.\n\nCan you take it over?\n\nAlice\n\n---\n\nFrom: Bob <bob@example.com>\nDate: Mar 18, 2026\n\nHi Alice,\n\nI can take it over. Quick questions:\n1. Who is the client contact?\n2. Do we have the current codebase?\n3. What's the budget?\n\nThanks,\nBob",
+      "expected": {
+        "summary": {
+          "mustInclude": ["handoff", "project management", "client dashboard", "April 5", "analytics widgets"],
+          "bulletCountRange": [2, 5]
+        },
+        "category": {
+          "expected": "Request",
+          "acceptableAlternatives": ["Action Required"]
+        },
+        "actionItems": {
+          "items": [
+            {
+              "taskKeywords": ["hand off", "dashboard project"],
+              "expectedOwner": "Bob",
+              "expectedPriority": "High"
+            }
+          ],
+          "countRange": [1, 3]
+        },
+        "reply": {
+          "mustAddress": ["clarifying questions", "client contact", "codebase"],
+          "forbiddenContent": [],
+          "toneToTest": "professional"
+        }
+      }
+    },
+    {
+      "id": "t2_bug_report",
+      "tier": 2,
+      "tierLabel": "Two-party conversation",
+      "description": "Engineer reports bug, lead asks for reproduction steps",
+      "currentUser": "alice@example.com",
+      "thread": "From: Charlie <charlie@example.com>\nDate: Mar 17, 2026\nSubject: Bug: Login page crashes on mobile\n\nHey Alice,\n\nFound a critical bug - the login page crashes when users try to sign in from mobile Safari. This is blocking our iOS users.\n\nI've attached the error logs.\n\nCharlie\n\n---\n\nFrom: Alice <alice@example.com>\nDate: Mar 17, 2026\n\nHi Charlie,\n\nThanks for catching this. Can you provide:\n1. Steps to reproduce\n2. Device/OS version\n3. Any recent changes to the login form?\n\nLet's prioritize this for tomorrow.\n\nAlice",
+      "expected": {
+        "summary": {
+          "mustInclude": ["bug", "login page", "crash", "mobile", "Safari"],
+          "bulletCountRange": [2, 4]
+        },
+        "category": {
+          "expected": "Bug Report",
+          "acceptableAlternatives": ["Action Required"]
+        },
+        "actionItems": {
+          "items": [
+            {
+              "taskKeywords": ["fix", "bug"],
+              "expectedOwner": "Charlie",
+              "expectedPriority": "High"
+            }
+          ],
+          "countRange": [1, 2]
+        },
+        "reply": {
+          "mustAddress": ["reproduction steps", "prioritize"],
+          "forbiddenContent": [],
+          "toneToTest": "professional"
+        }
+      }
+    },
+    {
+      "id": "t3_planning_thread",
+      "tier": 3,
+      "tierLabel": "Multi-sender thread",
+      "description": "3 people discuss project timeline with conflicting deadlines",
+      "currentUser": "alice@example.com",
+      "thread": "From: Alice <alice@example.com>\nDate: Mar 16, 2026\nSubject: Project Timeline - Need Buy-In\n\nTeam,\n\nHere's the proposed timeline for Phase 2:\n- Design: March 25 - April 5\n- Development: April 8 - May 15\n- Testing: May 18 - May 28\n\nThis keeps us on track for the June 1 launch.\n\nAlice\n\n---\n\nFrom: Bob <bob@example.com>\nDate: Mar 16, 2026\n\nAlice, the dev timeline is aggressive. We only have 5 devs. I'd push it to May 20 - June 10.\n\nBob\n\n---\n\nFrom: Diana <diana@example.com>\nDate: Mar 16, 2026\n\nI agree with Alice's timeline - we can't slip June 1. We need to hire a contractor. I'll coordinate that.\n\nDiana",
+      "expected": {
+        "summary": {
+          "mustInclude": ["Phase 2", "Design", "Development", "Testing", "June 1"],
+          "bulletCountRange": [3, 6]
+        },
+        "category": {
+          "expected": "Request",
+          "acceptableAlternatives": ["Action Required"]
+        },
+        "actionItems": {
+          "items": [
+            {
+              "taskKeywords": ["hire", "contractor"],
+              "expectedOwner": "Diana",
+              "expectedPriority": "High"
+            }
+          ],
+          "countRange": [1, 3]
+        },
+        "reply": {
+          "mustAddress": ["timeline", "constraints"],
+          "forbiddenContent": [],
+          "toneToTest": "professional"
+        }
+      }
+    },
+    {
+      "id": "t3_feedback_round",
+      "tier": 3,
+      "tierLabel": "Multi-sender thread",
+      "description": "Design review with 3 reviewers giving different feedback",
+      "currentUser": "alice@example.com",
+      "thread": "From: Alice <alice@example.com>\nDate: Mar 15, 2026\nSubject: Design Review: New Dashboard\n\nTeam,\n\nPlease review the attached mockup for the new analytics dashboard.\n\nAlice\n\n---\n\nFrom: Bob <bob@example.com>\nDate: Mar 15, 2026\n\nThe layout is clean, but the color contrast on the charts needs work. WCAG AA compliance is required.\n\nBob\n\n---\n\nFrom: Charlie <charlie@example.com>\nDate: Mar 15, 2026\n\nI love the design. One thing - can we add export to PDF functionality?\n\nCharlie\n\n---\n\nFrom: Diana <diana@example.com>\nDate: Mar 15, 2026\n\nAlice, can you revise based on Bob's accessibility feedback and add Charlie's export feature? Timeline is tight - need this done by March 22.\n\nDiana",
+      "expected": {
+        "summary": {
+          "mustInclude": ["dashboard", "design review", "accessibility", "export", "PDF"],
+          "bulletCountRange": [3, 5]
+        },
+        "category": {
+          "expected": "Request",
+          "acceptableAlternatives": ["Feedback"]
+        },
+        "actionItems": {
+          "items": [
+            {
+              "taskKeywords": ["revise", "accessibility"],
+              "expectedOwner": "Alice",
+              "expectedPriority": "High"
+            }
+          ],
+          "countRange": [1, 3]
+        },
+        "reply": {
+          "mustAddress": ["revisions", "timeline"],
+          "forbiddenContent": [],
+          "toneToTest": "professional"
+        }
+      }
+    },
+    {
+      "id": "t4_casual_slack_style",
+      "tier": 4,
+      "tierLabel": "Informal/messy",
+      "description": "Informal conversation with abbreviations, typos, emojis",
+      "currentUser": "alice@example.com",
+      "thread": "From: Bob <bob@example.com>\nDate: Mar 14, 2026\nSubject: re: quick sync\n\nyo alice!\n\nthanks for the heads up. yeah sounds good 4 the mtg tmrw @ 2pm. gonna bring my laptop & notes.\n\nbtw did u see the new api docs? they're 🔥 fr fr\n\n-bob\n\n---\n\nFrom: Alice <alice@example.com>\nDate: Mar 14, 2026\n\nlol yeah the docs r fire 🚀. also pls review the pr when u get a chance. thx!\n\nalice",
+      "expected": {
+        "summary": {
+          "mustInclude": ["meeting", "2pm", "api docs"],
+          "bulletCountRange": [1, 3]
+        },
+        "category": {
+          "expected": "Update / FYI",
+          "acceptableAlternatives": ["Action Required"]
+        },
+        "actionItems": {
+          "items": [
+            {
+              "taskKeywords": ["review", "pr"],
+              "expectedOwner": "Bob",
+              "expectedPriority": "Low"
+            }
+          ],
+          "countRange": [0, 2]
+        },
+        "reply": {
+          "mustAddress": ["meeting confirmation"],
+          "forbiddenContent": [],
+          "toneToTest": "casual"
+        }
+      }
+    },
+    {
+      "id": "t4_forwarded_chain",
+      "tier": 4,
+      "tierLabel": "Informal/messy",
+      "description": "Forwarded email with FYI wrapping original thread",
+      "currentUser": "alice@example.com",
+      "thread": "From: Charlie <charlie@example.com>\nDate: Mar 14, 2026\nSubject: FWD: Vendor Invoice - Action Needed\n\nFYI - see the details below. We need to process this by EOW.\n\n---------- Forwarded message ---------\nFrom: Vendor Billing <billing@vendor.com>\nDate: Mar 13, 2026\nSubject: Invoice #INV-2026-0847\n\nHi,\n\nPlease find the attached invoice for Q1 services. Total due: $45,000. Payment due by March 30.\n\nPlease confirm receipt.\n\nThanks,\nVendor Team",
+      "expected": {
+        "summary": {
+          "mustInclude": ["invoice", "Q1", "$45,000", "March 30"],
+          "bulletCountRange": [1, 4]
+        },
+        "category": {
+          "expected": "Action Required",
+          "acceptableAlternatives": ["Request"]
+        },
+        "actionItems": {
+          "items": [
+            {
+              "taskKeywords": ["process", "invoice", "payment"],
+              "expectedOwner": null,
+              "expectedPriority": "High"
+            }
+          ],
+          "countRange": [1, 2]
+        },
+        "reply": {
+          "mustAddress": ["receipt", "payment"],
+          "forbiddenContent": [],
+          "toneToTest": "professional"
+        }
+      }
+    },
+    {
+      "id": "t5_exec_strategy",
+      "tier": 5,
+      "tierLabel": "Long complex thread",
+      "description": "C-suite thread about budget reallocation with conflicting priorities",
+      "currentUser": "alice@example.com",
+      "thread": "From: Alice <alice@example.com>\nDate: Mar 12, 2026\nSubject: URGENT: Q2 Budget Reallocation\n\nLeadership,\n\nDue to the product delays, we need to reallocate $200K from marketing to engineering. This impacts:\n- Marketing: Cut events budget by 40%\n- Engineering: Add 2 contractors\n- Sales: Preserve current headcount\n\nNeed decision by EOD tomorrow.\n\nAlice\n\n---\n\nFrom: Bob <bob@example.com>\nDate: Mar 12, 2026\n\nAlice, cutting events kills our pipeline momentum. Can we cut differently? Maybe reduce contractor spend elsewhere?\n\nBob (VP Sales)\n\n---\n\nFrom: Diana <diana@example.com>\nDate: Mar 12, 2026\n\nI support Alice's plan. Engineering is the blocker. We risk launch if we don't invest now.\n\nDiana (VP Eng)\n\n---\n\nFrom: Charlie <charlie@example.com>\nDate: Mar 12, 2026\n\nI need to see the numbers. Which contractors are we cutting? What's the ROI?\n\nCharlie (CFO)\n\n---\n\nFrom: Alice <alice@example.com>\nDate: Mar 12, 2026\n\nCharlie - full breakdown attached. Diana - can you ID which contractors to hire? Bob - we can revisit events after launch.\n\nAlice",
+      "expected": {
+        "summary": {
+          "mustInclude": ["budget reallocation", "$200K", "marketing", "engineering", "contractors"],
+          "bulletCountRange": [3, 6]
+        },
+        "category": {
+          "expected": "Request",
+          "acceptableAlternatives": ["Action Required"]
+        },
+        "actionItems": {
+          "items": [
+            {
+              "taskKeywords": ["identify", "contractors", "hire"],
+              "expectedOwner": "Diana",
+              "expectedPriority": "High"
+            },
+            {
+              "taskKeywords": ["decision", "budget"],
+              "expectedOwner": null,
+              "expectedPriority": "High"
+            }
+          ],
+          "countRange": [2, 4]
+        },
+        "reply": {
+          "mustAddress": ["budget allocation", "contractors"],
+          "forbiddenContent": [],
+          "toneToTest": "professional"
+        }
+      }
+    },
+    {
+      "id": "t5_incident_response",
+      "tier": 5,
+      "tierLabel": "Long complex thread",
+      "description": "Incident thread with status updates and resolution steps",
+      "currentUser": "alice@example.com",
+      "thread": "From: Alert System <alerts@monitoring.com>\nDate: Mar 11, 2026 14:05\nSubject: CRITICAL: Database Performance Degradation\n\nDatabase response times > 5 seconds. 500+ errors/min. Incident declared.\n\n---\n\nFrom: Alice <alice@example.com>\nDate: Mar 11, 2026 14:10\n\nTeam - I'm declaring SEV-1. Charlie, can you check replication lag? Bob, can you scale DB? Diana, comms to customers.\n\n---\n\nFrom: Charlie <charlie@example.com>\nDate: Mar 11, 2026 14:25\n\nReplication lag is at 10s - that's the culprit. Full resync needed. ETA 30 mins.\n\n---\n\nFrom: Bob <bob@example.com>\nDate: Mar 11, 2026 14:30\n\nScaling up 4 more DB instances now. Should help with load distribution.\n\n---\n\nFrom: Diana <diana@example.com>\nDate: Mar 11, 2026 14:35\n\nCustomers notified. Status page updated to INVESTIGATING. We're monitoring Slack.\n\n---\n\nFrom: Alice <alice@example.com>\nDate: Mar 11, 2026 15:00\n\nUpdate: replication resolved. Error rate dropping. Keep watching. Post-incident review tomorrow at 10am. Charlie - can you lead RCA? Bob - document the scaling process. Diana - compile customer impact report.\n\nGreat work team!",
+      "expected": {
+        "summary": {
+          "mustInclude": ["database", "incident", "replication", "scaling", "resolved"],
+          "bulletCountRange": [4, 7]
+        },
+        "category": {
+          "expected": "Action Required",
+          "acceptableAlternatives": ["Update / FYI"]
+        },
+        "actionItems": {
+          "items": [
+            {
+              "taskKeywords": ["RCA", "post-incident", "review"],
+              "expectedOwner": "Charlie",
+              "expectedPriority": "High"
+            },
+            {
+              "taskKeywords": ["document", "scaling"],
+              "expectedOwner": "Bob",
+              "expectedPriority": "Medium"
+            },
+            {
+              "taskKeywords": ["customer impact", "report"],
+              "expectedOwner": "Diana",
+              "expectedPriority": "Medium"
+            }
+          ],
+          "countRange": [3, 4]
+        },
+        "reply": {
+          "mustAddress": ["resolution", "next steps"],
+          "forbiddenContent": [],
+          "toneToTest": "professional"
+        }
+      }
+    }
+  ]
+}

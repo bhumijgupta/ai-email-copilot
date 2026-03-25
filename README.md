@@ -119,6 +119,13 @@ extension/
     ├── promptBuilder.js        # AI prompt templates
     ├── gmailParser.js          # Gmail DOM parsing & thread expansion
     └── storage.js              # Your Brain storage
+
+eval/
+├── fixtures.json               # 10 synthetic Gmail threads (5 difficulty tiers)
+├── runner.js                   # Evaluation orchestrator
+├── scorer.js                   # Output scoring rubrics
+├── report.js                   # Terminal report + JSON results
+└── run.sh                      # One-command launcher
 ```
 
 ### Models
@@ -133,7 +140,108 @@ extension/
 
 To change models, edit `MODELS` in `extension/background.js`.
 
-## Building for Chrome Web Store
+## Model Evaluation Judge
+
+An automated evaluation harness that tests how well different Ollama models perform on each AI operation. It uses synthetic Gmail threads at varying difficulty levels, scores outputs against ground truth, and measures latency.
+
+### Quick Start
+
+```bash
+# Make sure Ollama is running
+OLLAMA_ORIGINS="*" ollama serve
+
+# Run the full evaluation
+./eval/run.sh
+
+# Or test specific models
+./eval/run.sh --models mistral,llama3
+
+# Or test a single difficulty tier
+./eval/run.sh --tier 3
+```
+
+### What It Evaluates
+
+The judge tests all four core operations:
+
+| Operation | Scoring Rubric |
+|-----------|---|
+| **Summarize** | Keyword coverage (40%), bullet count (15%), key decisions (15%), open questions (15%), action items (15%) |
+| **Categorize** | Exact match (70%), acceptable alternatives (40%), confidence calibration (30%) |
+| **Action Items** | Count accuracy (25%), task coverage (35%), owner accuracy (20%), priority accuracy (20%) |
+| **Reply** | Addresses topics (40%), no forbidden content (20%), tone match (20%), length sanity (10%), valid JSON (10%) |
+
+All scores are on a **0-100 scale**.
+
+### Test Fixtures (10 total)
+
+**Tier 1 — Simple single-sender**
+- `t1_meeting_invite`: Clear meeting request with action item
+- `t1_fyi_update`: FYI update, no action needed
+
+**Tier 2 — Two-party conversation**
+- `t2_project_handoff`: Task handoff with clarifying questions
+- `t2_bug_report`: Bug report with reproduction requests
+
+**Tier 3 — Multi-sender thread**
+- `t3_planning_thread`: Project timeline with conflicting deadlines
+- `t3_feedback_round`: Design review with multiple reviewers
+
+**Tier 4 — Informal/messy**
+- `t4_casual_slack_style`: Informal abbreviations, typos, emojis
+- `t4_forwarded_chain`: Forwarded email with mixed action items
+
+**Tier 5 — Long complex thread**
+- `t5_exec_strategy`: C-suite budget discussion, conflicting priorities
+- `t5_incident_response`: Incident thread with 5+ participants, status updates
+
+### Output
+
+The evaluation produces:
+
+1. **Terminal Report** — Formatted table with scores, latencies, and leaderboard
+2. **Recommended Models** — Best model per operation based on average scores
+3. **Tier Analysis** — Performance breakdown by difficulty level
+4. **JSON Results** — Full data saved to `eval/results.json` for analysis
+
+### CLI Options
+
+```bash
+./eval/run.sh [options]
+
+Options:
+  --models <list>   Comma-separated models (default: mistral,llama3,gemma2,phi3)
+  --tier <number>   Test only a specific difficulty tier (1-5)
+```
+
+### Example Output
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║  AI Email Copilot — Model Evaluation Report                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+Model: mistral
+────────────────────────────────────────────────────────────────
+  Fixture               Operation     Score  Latency   Valid
+────────────────────────────────────────────────────────────────
+  t1_meeting_invite     summarize        85  1.2s        ✓
+  t1_meeting_invite     categorize      100  0.8s        ✓
+  ...
+────────────────────────────────────────────────────────────────
+  OVERALL AVG                           87    1.5s       100%
+
+═══ Leaderboard (by overall average score) ═══
+  1. mistral    87 avg   1.5s latency
+  2. llama3     82 avg   2.1s latency
+  
+═══ Recommended Model Assignment ═══
+  Summarize:    mistral  (scored 88 avg)
+  Categorize:   mistral  (scored 92 avg)
+  Reply:        llama3   (scored 85 avg)
+```
+
+
 
 ```bash
 ./build.sh
