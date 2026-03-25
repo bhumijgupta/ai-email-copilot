@@ -64,27 +64,77 @@ function getCurrentUserEmail() {
 }
 
 /**
+ * Click the "show N hidden messages" button that Gmail displays when a long
+ * thread has many messages collapsed into one row. This button is typically
+ * a small element showing just a number (e.g. "4") between visible messages.
+ * Must be clicked before individual messages can be expanded.
+ * @param {HTMLElement} mainArea - The [role="main"] container
+ */
+async function expandHiddenMessagesButton(mainArea) {
+  // Gmail renders the "N messages" expander in several ways:
+  // 1. A <span> with class "adx" containing just a number
+  // 2. A <div> with class "adS" that acts as the clickable row
+  // 3. A <tr> or <div> with a data-collapsed attribute
+  const selectors = [
+    '.adS',                    // collapsed-messages row container
+    '[data-collapsed]',        // explicit collapsed marker
+    'span.adx',               // the number badge itself
+  ];
+
+  for (const selector of selectors) {
+    const elements = mainArea.querySelectorAll(selector);
+    for (const el of elements) {
+      // Verify it looks like a hidden-messages button: contains a small
+      // number, is visible, and doesn't already have expanded message bodies
+      const text = (el.innerText || "").trim();
+      const looksLikeCount = /^\d{1,3}$/.test(text) || el.classList.contains("adS") || el.hasAttribute("data-collapsed");
+      if (!looksLikeCount) continue;
+      if (el.querySelector('.a3s')) continue;
+      if (el.offsetHeight === 0) continue;
+
+      console.debug(`[Gmail Copilot] Found hidden-messages button ("${text}"), clicking...`);
+      el.click();
+
+      // Wait for Gmail to render the newly revealed messages
+      await new Promise(r => setTimeout(r, 500));
+
+      // Gmail may need a moment to finish DOM updates
+      const beforeCount = mainArea.querySelectorAll('.gs, [data-message-id]').length;
+      await new Promise(r => setTimeout(r, 300));
+      const afterCount = mainArea.querySelectorAll('.gs, [data-message-id]').length;
+      console.debug(`[Gmail Copilot] After expanding hidden messages: ${beforeCount} → ${afterCount} containers`);
+    }
+  }
+}
+
+/**
  * Programmatically expand all collapsed messages in the thread.
+ * First clicks the "show N hidden messages" button if present, then
+ * expands individual collapsed messages one by one.
  * Tracks which elements have already been clicked to avoid re-clicking
  * phantom elements (non-message containers that never gain .a3s).
  * @returns {Promise<void>}
  */
 async function expandAllMessages() {
   try {
-    const clickedSet = new WeakSet(); // Track elements we already tried
-    let previousBodyCount = document.querySelectorAll('.a3s').length;
-    let stableRounds = 0; // Count rounds where message count didn't change
-
-    console.debug(`[Gmail Copilot] Starting expansion (${previousBodyCount} already expanded)...`);
-
     const mainArea = document.querySelector('[role="main"]');
     if (!mainArea) {
       console.debug(`[Gmail Copilot] No [role="main"] found, skipping expansion`);
       return;
     }
 
+    // Phase 0: Click the "show N hidden messages" button if present.
+    // Gmail shows this as a clickable row with a number (e.g. "4") when
+    // many messages in a thread are collapsed into a single element.
+    await expandHiddenMessagesButton(mainArea);
+
+    const clickedSet = new WeakSet();
+    let previousBodyCount = document.querySelectorAll('.a3s').length;
+    let stableRounds = 0;
+
+    console.debug(`[Gmail Copilot] Starting per-message expansion (${previousBodyCount} already expanded)...`);
+
     for (let iteration = 1; iteration <= 6; iteration++) {
-      // Find collapsed candidates we haven't tried yet
       const candidates = [
         ...mainArea.querySelectorAll('[data-message-id]'),
         ...mainArea.querySelectorAll('.kv'),

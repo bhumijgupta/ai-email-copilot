@@ -17,10 +17,13 @@ alwaysApply: false
 - Sender name: `.gD`
 - Thread wrapper: `[role="main"] [role="list"]`
 - Collapsed messages: `.kv`, `.gs`, `.hX`
+- Hidden messages button: `.adS`, `span.adx`, `[data-collapsed]`
 - Current user: `[aria-label*="Google Account"]`, `[email]`
 
 ## Thread Expansion
+- Two-phase: first click the "N hidden messages" button (`.adS`), then expand individual collapsed messages.
+- `expandHiddenMessagesButton()` handles the numbered circle Gmail shows in long threads.
 - `expandAllMessages()` uses a `WeakSet` to track clicked elements.
 - A stability counter breaks the loop when message count stops changing.
-- Always test with both single-message and multi-message threads.
+- Always test with short threads, long threads (with hidden messages), and single-message threads.
 - Never click "show trimmed content" — trimmed content confuses the model.
