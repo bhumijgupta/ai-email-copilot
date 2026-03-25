@@ -309,22 +309,3 @@ async function handleGetMemoryStats(sendResponse) {
     });
   }
 }
-
-/**
- * Send a message from background to content script
- */
-function notifyContentScript(message, tabId = null) {
-  if (tabId) {
-    chrome.tabs.sendMessage(tabId, message);
-  } else {
-    chrome.tabs.query({}, (tabs) => {
-      tabs.forEach(tab => {
-        try {
-          chrome.tabs.sendMessage(tab.id, message);
-        } catch (error) {
-          // Ignore tabs that don't have content script
-        }
-      });
-    });
-  }
-}

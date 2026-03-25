@@ -4,8 +4,6 @@
   "version": "1.0.0",
   "description": "Summarise threads, generate replies, categorise emails & extract actions — all locally via Ollama.",
   "permissions": [
-    "activeTab",
-    "scripting",
     "storage"
   ],
   "host_permissions": [
