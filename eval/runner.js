@@ -10,7 +10,7 @@
  * - Collects results for reporting
  *
  * Usage:
- *   node eval/runner.js [--models mistral,llama3] [--tier 3]
+ *   node eval/runner.js [--models gemma3:4b,llama3.1:8b] [--tier 3]
  */
 
 const fs = require("fs");
@@ -256,15 +256,15 @@ AI Email Copilot — Model Evaluation Runner
 Usage: node eval/runner.js [options]
 
 Options:
-  --models <list>   Comma-separated models to test (default: mistral,llama3,gemma2,phi3)
+  --models <list>   Comma-separated models to test (default: gemma3:4b,llama3.1:8b)
   --tier <number>   Test only fixtures from a specific tier (1-5)
   --help            Show this help message
 
 Examples:
   node eval/runner.js
-  node eval/runner.js --models mistral,llama3
+  node eval/runner.js --models gemma3:4b,llama3.1:8b
   node eval/runner.js --tier 3
-  node eval/runner.js --models llama3 --tier 1
+  node eval/runner.js --models llama3.1:8b --tier 1
 `);
 }
 
@@ -332,7 +332,7 @@ async function runEvaluation() {
   }
 
   // Models to test
-  const modelsToTest = args.models || ["mistral", "llama3", "gemma2", "phi3"];
+  const modelsToTest = args.models || ["gemma3:4b", "llama3.1:8b"];
 
   console.log("\n=== AI Email Copilot — Model Evaluation ===\n");
   console.log(`Fixtures: ${fixtures.length}`);

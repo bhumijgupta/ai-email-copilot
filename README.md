@@ -20,8 +20,8 @@ A Chrome Extension that enhances Gmail with AI-powered email analysis — all ru
 Download from [ollama.ai](https://ollama.ai), then pull the required models:
 
 ```bash
-ollama pull llama3        # Reply generation + Your Brain
-ollama pull mistral       # Summarization, categorization, actions
+ollama pull llama3.1:8b   # Reply generation + Your Brain
+ollama pull gemma3:4b     # Summarization, categorization, actions
 ```
 
 ### Start Ollama with CORS enabled
@@ -132,11 +132,11 @@ eval/
 
 | Task | Model | Why |
 |------|-------|-----|
-| Summarization | `mistral` | Fast structured extraction |
-| Replies | `llama3` | Natural conversational output |
-| Categorization | `mistral` | Quick classification |
-| Action Items | `mistral` | Structured extraction |
-| Your Brain | `llama3` | Reuses reply model, no extra download |
+| Summarization | `gemma3:4b` | Fast, strong structured output with native JSON mode |
+| Replies | `llama3.1:8b` | Natural conversational tone, improved instruction following |
+| Categorization | `gemma3:4b` | Quick classification with reliable JSON |
+| Action Items | `gemma3:4b` | Structured extraction with minimal hallucination |
+| Your Brain | `llama3.1:8b` | Reuses reply model, strong style adaptation |
 
 To change models, edit `MODELS` in `extension/background.js`.
 

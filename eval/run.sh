@@ -7,10 +7,10 @@
 ##
 ## Usage:
 ##   ./eval/run.sh [options]
-##   bash eval/run.sh --models mistral,llama3 --tier 3
+##   bash eval/run.sh --models gemma3:4b,llama3.1:8b --tier 3
 ##
 ## Options:
-##   --models <list>   Comma-separated models to test (default: mistral,llama3,gemma2,phi3)
+##   --models <list>   Comma-separated models to test (default: gemma3:4b,llama3.1:8b)
 ##   --tier <number>   Test only fixtures from specific tier (1-5)
 ##   --help            Show this help message
 
@@ -58,13 +58,13 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: ./eval/run.sh [options]"
             echo ""
             echo "Options:"
-            echo "  --models <list>   Comma-separated models (default: mistral,llama3,gemma2,phi3)"
+            echo "  --models <list>   Comma-separated models (default: gemma3:4b,llama3.1:8b)"
             echo "  --tier <number>   Test only a specific difficulty tier (1-5)"
             echo "  --help            Show this message"
             echo ""
             echo "Examples:"
             echo "  ./eval/run.sh"
-            echo "  ./eval/run.sh --models mistral,llama3"
+            echo "  ./eval/run.sh --models gemma3:4b,llama3.1:8b"
             echo "  ./eval/run.sh --tier 3"
             exit 0
             ;;

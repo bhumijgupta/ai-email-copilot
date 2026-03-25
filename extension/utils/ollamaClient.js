@@ -18,11 +18,11 @@ const TIMEOUT_MS = 120000;
 /**
  * Call Ollama API with the given prompt and model.
  * @param {string} prompt - The prompt to send
- * @param {string} model - Model name (e.g., "llama3", "mistral")
+ * @param {string} model - Model name (e.g., "llama3.1:8b", "gemma3:4b")
  * @param {object} [format] - Optional JSON schema to enforce structured output
  * @returns {Promise<string>} The model's response text
  */
-async function callOllama(prompt, model = "llama3", format = undefined) {
+async function callOllama(prompt, model = "llama3.1:8b", format = undefined) {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);

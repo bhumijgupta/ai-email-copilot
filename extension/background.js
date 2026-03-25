@@ -11,11 +11,11 @@ importScripts(
 
 // Model configuration
 const MODELS = {
-  SUMMARY: "mistral",
-  REPLY: "llama3",
-  CATEGORY: "mistral",
-  ACTIONS: "mistral",
-  YOUR_BRAIN: "llama3"
+  SUMMARY: "gemma3:4b",
+  REPLY: "llama3.1:8b",
+  CATEGORY: "gemma3:4b",
+  ACTIONS: "gemma3:4b",
+  YOUR_BRAIN: "llama3.1:8b"
 };
 
 // JSON schemas for structured output (passed to Ollama's format parameter)
