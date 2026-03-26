@@ -70,7 +70,7 @@ function buildReplyPrompt(structuredThread, tone = "professional", metadata = {}
 
   return `${framingText}
 
-IMPORTANT: Do NOT copy greetings, sign-offs, or phrasing from the incoming emails. Only match the USER's writing style and tone.
+IMPORTANT: Write as the USER — adopt THEIR greeting style, sign-off, and phrasing (visible in their messages marked "(You)"). Do NOT mimic the other party's tone, greetings, or formality level.
 
 Email Subject: ${subject}
 
@@ -169,7 +169,7 @@ function buildYourBrainPrompt(examples, structuredThread, metadata = {}) {
 
   return `${framingText}
 
-IMPORTANT: Do NOT copy greetings, sign-offs, or phrasing from the incoming emails. Only match the USER's writing style from the examples below.
+IMPORTANT: Write as the USER — adopt THEIR greeting style, sign-off, and phrasing from the examples below. Do NOT mimic the other party's tone, greetings, or formality level.
 
 Below are examples of the user's writing. "Writing samples" are real emails they wrote. "Style corrections" show cases where they revised an AI draft — always prefer the "Preferred" version as the target style.
 

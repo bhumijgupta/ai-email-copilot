@@ -165,14 +165,10 @@ async function handleButtonClick(action) {
   try {
     const metadata = getEmailMetadata();
 
-    // For REPLY, use structured thread with sender headers; for others, use raw thread
-    let thread;
+    const result = await getStructuredThread();
+    let thread = result.text;
     if (action === "REPLY" || action === "YOUR_BRAIN_REPLY") {
-      const result = await getStructuredThread();
-      thread = result.text;
       metadata.isFollowup = result.isFollowup;
-    } else {
-      thread = await getEmailThread();
     }
 
     if (!thread || thread.length < 10) {
@@ -195,7 +191,7 @@ async function handleButtonClick(action) {
       {
         action,
         thread,
-        structuredThread: action === "REPLY" || action === "YOUR_BRAIN_REPLY" ? thread : undefined,
+        structuredThread: thread,
         summary: `${metadata.subject}\n\n${thread}`,
         email: thread,
         tone: "professional",

@@ -270,15 +270,11 @@ function getEmailMetadata() {
     let timestamp = "";
 
     if (lastContainer) {
-      const senderEl = lastContainer.querySelector('.gD[email], [email]');
-      if (senderEl) {
-        from = senderEl.getAttribute('email') || from;
-      }
-
-      const recipients = extractRecipients(lastContainer);
-      to = recipients.to;
-      cc = recipients.cc;
-      timestamp = extractTimestamp(lastContainer);
+      const details = extractMessageDetails(lastContainer);
+      from = details.from || "Unknown sender";
+      to = details.to;
+      cc = details.cc;
+      timestamp = details.date;
     }
 
     // Fallback: if we couldn't extract to from the DOM, collect all unique
@@ -351,13 +347,73 @@ function insertIntoReply(text) {
 }
 
 /**
- * Extract to/cc recipients from a message container's span.hb elements.
+ * Extract per-message metadata from the "Show details" panel (.ajA) if present,
+ * otherwise fall back to the collapsed-header elements.
+ *
+ * Gmail sometimes renders the .ajA panel in the DOM (hidden with display:none)
+ * inside expanded .gs containers — e.g. after the user has previously clicked
+ * "Show details". When present, the panel holds a table.ajC with rows labelled
+ * "from:", "to:", "cc:", "date:", "subject:" — giving properly separated To vs Cc.
+ *
+ * When the panel is absent (common case), falls back to .gD[email] for the sender,
+ * span.hb for recipients, and span.g3/[title] for the timestamp.
+ *
  * @param {Element} container - A .gs message container
- * @returns {{ to: string[], cc: string[] }}
+ * @returns {{ from: string, to: string[], cc: string[], date: string, subject: string }}
  */
-function extractRecipients(container) {
-  const to = [];
-  const cc = [];
+function extractMessageDetails(container) {
+  const result = { from: "", to: [], cc: [], date: "", subject: "" };
+
+  const panel = container.querySelector('.ajA');
+  if (panel) {
+    const rows = panel.querySelectorAll('table.ajC tr.ajv');
+    for (const row of rows) {
+      const labelEl = row.querySelector('td.gG span.gI');
+      const valueEl = row.querySelector('td.gL span.gI');
+      if (!labelEl || !valueEl) continue;
+
+      const label = (labelEl.textContent || "").trim().toLowerCase().replace(':', '');
+
+      switch (label) {
+        case 'from': {
+          const emailEl = valueEl.querySelector('[email]');
+          if (emailEl) result.from = emailEl.getAttribute('email') || "";
+          break;
+        }
+        case 'to': {
+          result.to = Array.from(valueEl.querySelectorAll('[email]'))
+            .map(el => el.getAttribute('email'))
+            .filter(Boolean);
+          break;
+        }
+        case 'cc': {
+          result.cc = Array.from(valueEl.querySelectorAll('[email]'))
+            .map(el => el.getAttribute('email'))
+            .filter(Boolean);
+          break;
+        }
+        case 'date': {
+          result.date = (valueEl.textContent || "").trim();
+          break;
+        }
+        case 'subject': {
+          result.subject = (valueEl.textContent || "").trim();
+          break;
+        }
+      }
+    }
+
+    if (result.from || result.to.length > 0) {
+      return result;
+    }
+  }
+
+  // Fallback: parse from collapsed header elements
+  const senderEl = container.querySelector('.gD[email], [email]');
+  if (senderEl) {
+    result.from = senderEl.getAttribute('email') || "";
+  }
+
   const hbSpans = container.querySelectorAll('span.hb');
   for (const hb of hbSpans) {
     const rawText = (hb.childNodes[0]?.textContent || "").trim().toLowerCase();
@@ -365,31 +421,22 @@ function extractRecipients(container) {
       .map(el => el.getAttribute('email'))
       .filter(Boolean);
     if (rawText.startsWith('to')) {
-      to.push(...emails);
+      result.to.push(...emails);
     } else if (rawText.startsWith('cc')) {
-      cc.push(...emails);
+      result.cc.push(...emails);
     }
   }
-  return { to, cc };
-}
 
-/**
- * Extract the timestamp from a message container.
- * Gmail stores the full date in a span or abbr with a title attribute inside
- * the message header (class "gH" or "gK"), e.g. title="Tue, Mar 24, 2026, 2:30 PM".
- * @param {Element} container - A .gs message container
- * @returns {string} Extracted date string or empty string
- */
-function extractTimestamp(container) {
   const dateEl =
     container.querySelector('.gH .g3') ||
     container.querySelector('.gH [title]') ||
     container.querySelector('.gK [title]') ||
     container.querySelector('span[title]');
   if (dateEl) {
-    return (dateEl.getAttribute('title') || dateEl.innerText || "").trim();
+    result.date = (dateEl.getAttribute('title') || dateEl.innerText || "").trim();
   }
-  return "";
+
+  return result;
 }
 
 /**
@@ -417,19 +464,17 @@ async function getIndividualMessages() {
         const bodyText = (body.innerText || "").trim();
         if (!bodyText) return;
 
+        const details = extractMessageDetails(container);
+
         const senderSpan = container.querySelector(".gD, [email]");
         const senderName = senderSpan
           ? (senderSpan.getAttribute("name") || senderSpan.innerText || "").trim()
           : "Unknown";
-        const senderEmail = senderSpan
-          ? (senderSpan.getAttribute("email") || "").trim()
-          : "";
+        const senderEmail = details.from || (senderSpan ? (senderSpan.getAttribute("email") || "").trim() : "");
 
         const isMe = senderEmail && currentUser && senderEmail.toLowerCase() === currentUser.toLowerCase();
-        const { to, cc } = extractRecipients(container);
-        const timestamp = extractTimestamp(container);
 
-        results.push({ sender: senderName, senderEmail, to, cc, timestamp, body: bodyText, isMe });
+        results.push({ sender: senderName, senderEmail, to: details.to, cc: details.cc, timestamp: details.date, body: bodyText, isMe });
       });
     } else {
       bodies.forEach(body => {
