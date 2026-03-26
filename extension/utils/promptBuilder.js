@@ -56,10 +56,13 @@ function buildReplyPrompt(structuredThread, tone = "professional", metadata = {}
   let guidelines;
 
   if (isFollowup) {
-    framingText = `${SYSTEM_PERSONA} The last message in this thread is yours. You are drafting a follow-up email. This could be a gentle nudge for a response, additional context you forgot to include, or an update on a previous point.`;
-    guidelines = `- Reference your previous message without restating it entirely
-- Be concise — only add what's necessary
-- Use a tone of gentle urgency if checking in`;
+    framingText = `${SYSTEM_PERSONA} The last message in this thread is yours and it has not received a response yet. Draft a NEW follow-up email that is substantially different from your last message.`;
+    guidelines = `- Do NOT repeat or rephrase your last message — the recipient already has it
+- Acknowledge that time has passed since your last email (e.g. "Just following up on my earlier email…")
+- Add gentle urgency or a specific ask to prompt a response
+- Optionally suggest a next step, deadline, or alternative if no reply comes
+- Keep it short — 2-4 sentences max
+- Match the user's greeting and sign-off style from their earlier messages`;
   } else {
     framingText = `${SYSTEM_PERSONA} You are writing as ${currentUser}. You are replying to an email from ${from}.`;
     guidelines = `- Address all questions or requests mentioned
@@ -151,12 +154,13 @@ function buildYourBrainPrompt(examples, structuredThread, metadata = {}) {
   let guidelines;
 
   if (isFollowup) {
-    framingText = `${SYSTEM_PERSONA} You write in a specific user's style. The last message in this thread is yours. You are drafting a follow-up email to that message.`;
-    guidelines = `- Maintain the user's characteristic writing style
-- Reference your previous message without restating it entirely
-- Be concise — only add what's necessary
-- Use similar vocabulary and tone from the examples
-- Keep sentence length and structure consistent
+    framingText = `${SYSTEM_PERSONA} You write in a specific user's style. The last message in this thread is yours and it has not received a response yet. Draft a NEW follow-up email that is substantially different from your last message.`;
+    guidelines = `- Do NOT repeat or rephrase your last message — the recipient already has it
+- Acknowledge that time has passed since your last email
+- Add gentle urgency or a specific ask to prompt a response
+- Optionally suggest a next step, deadline, or alternative if no reply comes
+- Keep it short — 2-4 sentences max
+- Maintain the user's characteristic writing style, vocabulary, and tone from the examples
 - If style corrections are provided, follow the patterns shown in the "Preferred" versions`;
   } else {
     framingText = `${SYSTEM_PERSONA} You write in a specific user's style. You are writing as ${currentUser}. You are replying to an email from ${from}.`;

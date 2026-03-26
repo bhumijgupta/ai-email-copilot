@@ -449,7 +449,7 @@
       "id": "t2_followup_nudge",
       "tier": 2,
       "tierLabel": "Follow-up mode",
-      "description": "User's last message in thread, should draft a follow-up instead of replying to someone else",
+      "description": "User's last message in thread, should draft a NEW follow-up that doesn't repeat the previous message",
       "currentUser": "alice@example.com",
       "metadata": {
         "currentUser": "alice@example.com",
@@ -474,8 +474,8 @@
           "countRange": [0, 1]
         },
         "reply": {
-          "mustAddress": ["checking in", "follow-up", "status"],
-          "forbiddenContent": ["restating previous context", "repeating all details"],
+          "mustAddress": ["follow"],
+          "forbiddenContent": ["60% complete", "charting library integration", "design and api integration are done"],
           "toneToTest": "professional"
         }
       }
