@@ -195,7 +195,7 @@ The popup uses a dark theme that mirrors the floating action bar's palette.
 - Status indicator: 10px dot with 3px ring using `--dm-success`/`--dm-error`/`--dm-warning` at 20% opacity.
 - Toggle: 36×20px, `--dm-border-subtle` track, `--dm-text-muted` knob; checked: `--dm-accent` track, white knob.
 - Memory stats: value (20px/500 `--dm-accent`) + label (11px `--dm-text-secondary`), divided by `--dm-border`.
-- Buttons: outlined (`--dm-accent` text, `--dm-border-subtle` border) and danger (`--dm-error` text, `--dm-border-subtle` border).
+- Button: danger variant (`--dm-error` text, `--dm-border-subtle` border) for clearing Your Brain memory.
 - Models: 2-column grid, `--dm-border` gap, `--dm-surface` cells.
 - Quick start: numbered circles (`--dm-accent-surface` bg, `--dm-accent` text), step text `--dm-text-muted`.
 - Footer: `--dm-surface` bg, top border `--dm-border`, 11px `--dm-text-tertiary`.

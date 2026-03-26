@@ -11,7 +11,6 @@ function initialize() {
 
   // Event listeners
   document.getElementById("your-brain-toggle").addEventListener("change", toggleYourBrain);
-  document.getElementById("improve-with-style").addEventListener("click", improveWithStyle);
   document.getElementById("reset-memory").addEventListener("click", resetMemory);
 
   // Refresh status every 5 seconds
@@ -83,15 +82,6 @@ function loadMemoryStats() {
       document.getElementById("edits-count").textContent = response.stats.editsStored || 0;
     }
   });
-}
-
-/**
- * Improve with my style - manually trigger Your Brain
- */
-function improveWithStyle() {
-  alert(
-    "This will use your past emails to improve AI replies. Make sure to enable Your Brain and train it from some email threads first."
-  );
 }
 
 /**
