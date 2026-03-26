@@ -164,6 +164,42 @@ All buttons: 8px radius, 13px font, 500 weight, 8px 16px padding.
 - Shadow: elevation 2.
 - Background: `--text-primary` (dark) for all types, with a left-color strip for semantic color.
 
+### Extension Popup (Dark mode)
+
+The popup uses a dark theme that mirrors the floating action bar's palette.
+
+**Dark-mode tokens used by the popup:**
+
+| Token | Hex | Usage |
+|---|---|---|
+| `--dm-surface-base` | `#1a1b1e` | Body / container background |
+| `--dm-surface` | `#202124` | Header, cards, footer, model cells |
+| `--dm-surface-raised` | `#292a2d` | Code blocks, input backgrounds |
+| `--dm-text-primary` | `#e8eaed` | Headings, body text, values |
+| `--dm-text-secondary` | `#9aa0a6` | Labels, subtitles, descriptions |
+| `--dm-text-tertiary` | `#80868b` | Footer text |
+| `--dm-text-muted` | `#bdc1c6` | Step text, toggle knob (off) |
+| `--dm-border` | `#3c4043` | Dividers, card borders, grid gaps |
+| `--dm-border-subtle` | `#5f6368` | Button borders, toggle track (off) |
+| `--dm-accent` | `#8ab4f8` | Accent blue (star icon, toggle on, stat values, links) |
+| `--dm-accent-surface` | `rgba(138,180,248,.12)` | Step number circles, hover tints |
+| `--dm-success` | `#81c995` | Connected dot, connected text |
+| `--dm-warning` | `#fdd663` | CORS warning dot / text |
+| `--dm-error` | `#f28b82` | Disconnected dot / text, danger buttons |
+
+**Component specs:**
+
+- Width: 380px, background: `--dm-surface-base`.
+- Header: `--dm-surface` bg, bottom border `--dm-border`, star icon (`--dm-accent`) + title (14px/500 `--dm-text-primary`) + subtitle (12px `--dm-text-secondary`).
+- Cards: `--dm-surface` bg, 8px radius, dark elevation (`rgba(0,0,0,.5)`), 14–16px padding.
+- Status indicator: 10px dot with 3px ring using `--dm-success`/`--dm-error`/`--dm-warning` at 20% opacity.
+- Toggle: 36×20px, `--dm-border-subtle` track, `--dm-text-muted` knob; checked: `--dm-accent` track, white knob.
+- Memory stats: value (20px/500 `--dm-accent`) + label (11px `--dm-text-secondary`), divided by `--dm-border`.
+- Buttons: outlined (`--dm-accent` text, `--dm-border-subtle` border) and danger (`--dm-error` text, `--dm-border-subtle` border).
+- Models: 2-column grid, `--dm-border` gap, `--dm-surface` cells.
+- Quick start: numbered circles (`--dm-accent-surface` bg, `--dm-accent` text), step text `--dm-text-muted`.
+- Footer: `--dm-surface` bg, top border `--dm-border`, 11px `--dm-text-tertiary`.
+
 ---
 
 ## 8. Iconography

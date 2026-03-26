@@ -31,13 +31,13 @@ function checkOllamaStatus() {
       dot.classList.remove("disconnected", "warning");
       dot.classList.add("connected");
       text.textContent = "Connected";
-      text.style.color = "#16a34a";
+      text.style.color = "#81c995";
       if (hint) hint.textContent = "";
     } else if (response && response.error === "origins") {
       dot.classList.remove("connected", "disconnected");
       dot.classList.add("warning");
       text.textContent = "Blocked (CORS)";
-      text.style.color = "#d97706";
+      text.style.color = "#fdd663";
       if (hint) {
         hint.innerHTML =
           'Ollama is running but blocking the extension.<br>' +
@@ -47,7 +47,7 @@ function checkOllamaStatus() {
       dot.classList.remove("connected", "warning");
       dot.classList.add("disconnected");
       text.textContent = "Disconnected";
-      text.style.color = "#dc2626";
+      text.style.color = "#f28b82";
       if (hint) hint.textContent = "Run: ollama serve";
     }
   });

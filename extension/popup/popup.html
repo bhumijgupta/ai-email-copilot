@@ -8,73 +8,112 @@
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>AI Email Copilot</h1>
-      <p>Local AI for Gmail productivity</p>
-    </div>
 
-    <div class="status-section">
-      <h2>Ollama Status</h2>
-      <div class="status-indicator">
-        <div id="status-dot" class="dot disconnected"></div>
-        <span id="status-text">Checking...</span>
+    <!-- Header — matches side-panel header style -->
+    <div class="popup-header">
+      <svg class="popup-header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L14.09 8.26L20 9.27L15.55 13.97L16.91 20L12 16.9L7.09 20L8.45 13.97L4 9.27L9.91 8.26L12 2Z" fill="#8ab4f8"/>
+      </svg>
+      <div class="popup-header-text">
+        <h1>AI Email Copilot</h1>
+        <p>Local AI for Gmail productivity</p>
       </div>
-      <p id="status-hint" class="help-text">Ollama must be running on localhost:11434</p>
     </div>
 
-    <div class="settings-section">
-      <h2>Settings</h2>
-
-      <div class="setting-item">
-        <label>
-          <input type="checkbox" id="your-brain-toggle" />
-          <span class="label-text">Enable Your Brain</span>
-        </label>
-        <p class="help-text">
-          Learn from your writing style to personalize replies
-        </p>
+    <!-- Ollama status -->
+    <div class="popup-section">
+      <div class="popup-section-title">Connection</div>
+      <div class="popup-card">
+        <div class="status-row">
+          <div id="status-dot" class="status-dot disconnected"></div>
+          <span id="status-text" class="status-label">Checking...</span>
+        </div>
+        <p id="status-hint" class="status-hint">Ollama must be running on localhost:11434</p>
       </div>
+    </div>
 
-      <button id="improve-with-style" class="btn btn-secondary">
-        💡 Improve with My Style
-      </button>
+    <!-- Your Brain settings -->
+    <div class="popup-section">
+      <div class="popup-section-title">Your Brain</div>
+      <div class="popup-card">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Enable Your Brain</span>
+            <span class="toggle-desc">Learn from your writing style to personalize replies</span>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="your-brain-toggle" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
 
-      <div class="memory-stats">
-        <p>
-          <strong>Memory:</strong> <span id="emails-count">0</span> emails,
-          <span id="edits-count">0</span> edits
-        </p>
+        <div class="memory-row">
+          <div class="memory-stat">
+            <span id="emails-count" class="memory-stat-value">0</span>
+            <span class="memory-stat-label">Emails</span>
+          </div>
+          <div class="memory-stat">
+            <span id="edits-count" class="memory-stat-value">0</span>
+            <span class="memory-stat-label">Edits</span>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="improve-with-style" class="popup-btn popup-btn-outlined">
+            Improve with my style
+          </button>
+          <button id="reset-memory" class="popup-btn popup-btn-danger">
+            Clear memory
+          </button>
+        </div>
       </div>
-
-      <button id="reset-memory" class="btn btn-danger">
-        🗑️ Clear Memory
-      </button>
     </div>
 
-    <div class="models-section">
-      <h2>Models</h2>
-      <ul>
-        <li>Summarization: <strong>gemma3:4b</strong></li>
-        <li>Replies: <strong>llama3.1:8b</strong></li>
-        <li>Categorization: <strong>gemma3:4b</strong></li>
-        <li>Action Items: <strong>gemma3:4b</strong></li>
-        <li>Your Brain: <strong>llama3.1:8b</strong></li>
-      </ul>
+    <!-- Models -->
+    <div class="popup-section">
+      <div class="popup-section-title">Models</div>
+      <div class="models-grid">
+        <div class="model-cell">
+          <div class="model-cell-label">Summarization</div>
+          <div class="model-cell-value">gemma3:4b</div>
+        </div>
+        <div class="model-cell">
+          <div class="model-cell-label">Replies</div>
+          <div class="model-cell-value">llama3.1:8b</div>
+        </div>
+        <div class="model-cell">
+          <div class="model-cell-label">Categorization</div>
+          <div class="model-cell-value">gemma3:4b</div>
+        </div>
+        <div class="model-cell">
+          <div class="model-cell-label">Action items</div>
+          <div class="model-cell-value">gemma3:4b</div>
+        </div>
+        <div class="model-cell" style="grid-column: span 2;">
+          <div class="model-cell-label">Your Brain</div>
+          <div class="model-cell-value">llama3.1:8b</div>
+        </div>
+      </div>
     </div>
 
-    <div class="help-section">
-      <h2>Quick Start</h2>
-      <ol>
-        <li>Start Ollama with CORS enabled:<br><code>OLLAMA_ORIGINS="*" ollama serve</code></li>
-        <li>Open a Gmail thread</li>
-        <li>Click the buttons in the floating bar to analyze</li>
-        <li>Copy results or insert into your reply</li>
-      </ol>
+    <!-- Quick start -->
+    <div class="popup-section">
+      <div class="popup-section-title">Quick start</div>
+      <div class="popup-card">
+        <ol class="quick-start-list">
+          <li><span>Start Ollama with CORS enabled:<br><code>OLLAMA_ORIGINS="*" ollama serve</code></span></li>
+          <li><span>Open a Gmail thread</span></li>
+          <li><span>Click buttons in the floating bar to analyze</span></li>
+          <li><span>Copy results or insert into your reply</span></li>
+        </ol>
+      </div>
     </div>
 
-    <div class="footer">
-      <p>v1.0.0 • All processing is local • No data sent to external APIs</p>
+    <!-- Footer -->
+    <div class="popup-footer">
+      <p>v1.0.0 — All processing is local — No data sent to external APIs</p>
     </div>
+
   </div>
 
   <script src="popup.js"></script>
