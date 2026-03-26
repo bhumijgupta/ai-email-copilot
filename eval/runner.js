@@ -192,30 +192,37 @@ async function isModelAvailable(model) {
 const OPERATIONS = {
   summarize: {
     name: "summarize",
-    buildPrompt: (fixture) => 
-      promptBuilder.buildSummaryPrompt(fixture.thread, fixture.currentUser),
+    buildPrompt: (fixture) => {
+      const metadata = fixture.metadata || { currentUser: fixture.currentUser };
+      return promptBuilder.buildSummaryPrompt(fixture.thread, metadata);
+    },
     schema: SCHEMAS.SUMMARY,
     parseResult: (response) => promptBuilder.parseJsonResponse(response)
   },
   categorize: {
     name: "categorize",
-    buildPrompt: (fixture) => promptBuilder.buildCategoryPrompt(fixture.thread),
+    buildPrompt: (fixture) => {
+      const metadata = fixture.metadata || {};
+      return promptBuilder.buildCategoryPrompt(fixture.thread, metadata);
+    },
     schema: SCHEMAS.CATEGORY,
     parseResult: (response) => promptBuilder.parseJsonResponse(response)
   },
   actionItems: {
     name: "actionItems",
-    buildPrompt: (fixture) =>
-      promptBuilder.buildActionPrompt(fixture.thread, fixture.currentUser),
+    buildPrompt: (fixture) => {
+      const metadata = fixture.metadata || { currentUser: fixture.currentUser };
+      return promptBuilder.buildActionPrompt(fixture.thread, metadata);
+    },
     schema: SCHEMAS.ACTIONS,
     parseResult: (response) => promptBuilder.parseJsonResponse(response)
   },
   reply: {
     name: "reply",
     buildPrompt: (fixture) => {
-      // For reply, we need a summary first. Create a simple one.
-      const simpleSummary = `Email thread about: ${fixture.description}`;
-      return promptBuilder.buildReplyPrompt(simpleSummary, "professional", fixture.currentUser);
+      const threadContent = fixture.structuredThread || fixture.thread;
+      const metadata = fixture.metadata || { currentUser: fixture.currentUser };
+      return promptBuilder.buildReplyPrompt(threadContent, "professional", metadata);
     },
     schema: SCHEMAS.REPLY,
     parseResult: (response) => promptBuilder.parseJsonResponse(response)

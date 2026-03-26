@@ -65,6 +65,35 @@ const SCHEMAS = {
   }
 };
 
+/**
+ * Debug-aware wrapper around callOllama.
+ * When debug mode is active, logs the full prompt, model, and response
+ * to the service worker console with copy-pasteable formatting.
+ */
+async function callOllamaDebug(prompt, model, format, operation) {
+  const debug = await isDebugMode();
+
+  if (debug) {
+    console.group(`%c[DEBUG] ${operation}`, "color:#1a73e8;font-weight:bold");
+    console.log("%cModel:", "font-weight:bold", model);
+    console.log("%cFormat schema:", "font-weight:bold", format || "(none)");
+    console.log("%cPrompt:\n", "font-weight:bold", prompt);
+    console.time(`${operation} duration`);
+  }
+
+  const response = await callOllama(prompt, model, format);
+
+  if (debug) {
+    console.timeEnd(`${operation} duration`);
+    console.log("%cRaw response:\n", "font-weight:bold;color:#188038", response);
+    const parsed = parseJsonResponse(response);
+    console.log("%cParsed JSON:", "font-weight:bold;color:#e37400", parsed);
+    console.groupEnd();
+  }
+
+  return response;
+}
+
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   handleMessage(request, sender, sendResponse);
@@ -113,6 +142,15 @@ async function handleMessage(request, sender, sendResponse) {
         await handleGetMemoryStats(sendResponse);
         break;
 
+      case "SET_DEBUG_MODE":
+        await setDebugMode(request.enabled);
+        sendResponse({ success: true, debug: request.enabled });
+        break;
+
+      case "GET_DEBUG_MODE":
+        sendResponse({ success: true, debug: await isDebugMode() });
+        break;
+
       default:
         sendResponse({ error: `Unknown action: ${request.action}` });
     }
@@ -127,8 +165,9 @@ async function handleMessage(request, sender, sendResponse) {
  */
 async function handleSummarize(request, sendResponse) {
   try {
-    const prompt = buildSummaryPrompt(request.thread, request.currentUser);
-    const response = await callOllama(prompt, MODELS.SUMMARY, SCHEMAS.SUMMARY);
+    const metadata = request.metadata || { currentUser: request.currentUser };
+    const prompt = buildSummaryPrompt(request.thread, metadata);
+    const response = await callOllamaDebug(prompt, MODELS.SUMMARY, SCHEMAS.SUMMARY, "SUMMARISE");
 
     const parsed = parseJsonResponse(response);
     if (!parsed) {
@@ -161,13 +200,17 @@ async function handleReply(request, sendResponse) {
     const examples = brainEnabled ? await getYourBrainExamples() : "";
     const hasExamples = examples && examples !== "No past emails found.";
 
+    // Use structuredThread if available (has sender headers), fallback to summary
+    const threadContent = request.structuredThread || request.summary || "";
+    const metadata = request.metadata || { currentUser: request.currentUser };
+
     let response;
     if (hasExamples) {
-      const prompt = buildYourBrainPrompt(examples, request.summary);
-      response = await callOllama(prompt, MODELS.YOUR_BRAIN, SCHEMAS.REPLY);
+      const prompt = buildYourBrainPrompt(examples, threadContent, metadata);
+      response = await callOllamaDebug(prompt, MODELS.YOUR_BRAIN, SCHEMAS.REPLY, "REPLY (Your Brain)");
     } else {
-      const prompt = buildReplyPrompt(request.summary, request.tone || "professional", request.currentUser);
-      response = await callOllama(prompt, MODELS.REPLY, SCHEMAS.REPLY);
+      const prompt = buildReplyPrompt(threadContent, request.tone || "professional", metadata);
+      response = await callOllamaDebug(prompt, MODELS.REPLY, SCHEMAS.REPLY, "REPLY");
     }
 
     const parsed = parseJsonResponse(response);
@@ -190,8 +233,9 @@ async function handleReply(request, sendResponse) {
  */
 async function handleCategorize(request, sendResponse) {
   try {
-    const prompt = buildCategoryPrompt(request.email);
-    const response = await callOllama(prompt, MODELS.CATEGORY, SCHEMAS.CATEGORY);
+    const metadata = request.metadata || {};
+    const prompt = buildCategoryPrompt(request.email, metadata);
+    const response = await callOllamaDebug(prompt, MODELS.CATEGORY, SCHEMAS.CATEGORY, "CATEGORISE");
 
     const parsed = parseJsonResponse(response);
     if (!parsed) {
@@ -219,8 +263,9 @@ async function handleCategorize(request, sendResponse) {
  */
 async function handleActionItems(request, sendResponse) {
   try {
-    const prompt = buildActionPrompt(request.thread, request.currentUser);
-    const response = await callOllama(prompt, MODELS.ACTIONS, SCHEMAS.ACTIONS);
+    const metadata = request.metadata || { currentUser: request.currentUser };
+    const prompt = buildActionPrompt(request.thread, metadata);
+    const response = await callOllamaDebug(prompt, MODELS.ACTIONS, SCHEMAS.ACTIONS, "ACTION_ITEMS");
 
     const parsed = parseJsonResponse(response);
     if (!parsed || !parsed.actionItems) {
@@ -261,7 +306,7 @@ async function handleRefineReply(request, sendResponse) {
       request.feedback,
       request.threadContext || ""
     );
-    const response = await callOllama(prompt, MODELS.REPLY, SCHEMAS.REPLY);
+    const response = await callOllamaDebug(prompt, MODELS.REPLY, SCHEMAS.REPLY, "REFINE_REPLY");
     const parsed = parseJsonResponse(response);
     const refined = parsed?.reply || response.trim();
 

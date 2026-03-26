@@ -84,6 +84,9 @@ After any meaningful change, check whether these docs need updating:
 | `README.md` | Features list, usage table, architecture diagram, file structure, model table, troubleshooting | New feature, renamed feature, new file, changed model, new prerequisite |
 | `docs/privacy.html` | Permissions, data stored locally, processing flow | New permission in manifest, new storage keys, new network calls, changed data flow |
 | `style-guide.md` | Tokens, component specs, do's/don'ts | New UI component, changed design language, new color/spacing tokens |
+| `eval/fixtures.json` | Fixture `metadata`, `structuredThread`, `expected` fields | Changed prompt signatures, thread data shape, metadata shape, new quality dimensions |
+| `eval/runner.js` | `OPERATIONS` prompt builder calls | Changed prompt builder function signatures |
+| `eval/scorer.js` | Scoring rubrics and point allocation | New quality dimensions (e.g., anti-mimicry), changed evaluation criteria |
 
 **Rules:**
 - Update docs in the **same changeset** as the code change, not as a follow-up.
@@ -91,6 +94,7 @@ After any meaningful change, check whether these docs need updating:
 - `docs/privacy.html`: If you add a new Chrome permission, a new `chrome.storage` key, or any network call, update the relevant sections. Keep the "Last updated" date current.
 - `style-guide.md`: If you introduce a new component or change a design token, document it here first.
 - Never let feature names in docs diverge from the code (e.g., if a feature is renamed in code, rename it in all docs too).
+- **Eval framework:** When changing prompt templates, thread extraction, metadata shape, or response parsing, update `eval/fixtures.json`, `eval/runner.js`, and `eval/scorer.js` in the same changeset. Fixture data shapes must mirror what the production prompt builders expect.
 
 ## Common Tasks
 

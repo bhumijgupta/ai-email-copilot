@@ -278,9 +278,10 @@ function scoreActionItems(result, expected) {
 /**
  * Score a reply against expected output.
  * Rubric:
- * - Addresses required topics (40 pts): % of mustAddress items reflected
- * - No forbidden content (20 pts): None of forbiddenContent appears
- * - Tone match (20 pts): Simple heuristics based on toneToTest
+ * - Addresses required topics (35 pts): % of mustAddress items reflected
+ * - No forbidden content (15 pts): None of forbiddenContent appears
+ * - Anti-mimicry (15 pts): Reply doesn't copy sender's distinctive greetings/sign-offs
+ * - Tone match (15 pts): Simple heuristics based on toneToTest
  * - Length sanity (10 pts): Between 50 and 1000 chars
  * - Valid JSON parse (10 pts): Response was valid JSON with 'reply' key
  * Total: 100 pts
@@ -295,13 +296,13 @@ function scoreReply(result, expected) {
 
   const replyText = (result.reply || "").toLowerCase();
 
-  // 1. Addresses required topics (40 pts)
+  // 1. Addresses required topics (35 pts)
   const mustAddress = expected.mustAddress || [];
   if (mustAddress.length > 0) {
     const addressedCount = mustAddress.filter((topic) =>
       replyText.includes(topic.toLowerCase())
     ).length;
-    const addressScore = Math.round((addressedCount / mustAddress.length) * 40);
+    const addressScore = Math.round((addressedCount / mustAddress.length) * 35);
     breakdown.addressesTopics = {
       score: addressScore,
       addressed: addressedCount,
@@ -309,37 +310,53 @@ function scoreReply(result, expected) {
     };
     score += addressScore;
   } else {
-    breakdown.addressesTopics = { score: 40, addressed: 0, total: 0 };
-    score += 40;
+    breakdown.addressesTopics = { score: 35, addressed: 0, total: 0 };
+    score += 35;
   }
 
-  // 2. No forbidden content (20 pts)
+  // 2. No forbidden content (15 pts)
   const forbidden = expected.forbiddenContent || [];
   const hasForbidden = forbidden.some((content) =>
     replyText.includes(content.toLowerCase())
   );
-  const forbiddenScore = hasForbidden ? 0 : 20;
+  const forbiddenScore = hasForbidden ? 0 : 15;
   breakdown.forbiddenContent = {
     score: forbiddenScore,
     hasForbidden
   };
   score += forbiddenScore;
 
-  // 3. Tone match (20 pts)
+  // 3. Anti-mimicry (15 pts): reply must not parrot the sender's greeting or sign-off
+  const forbiddenGreetings = expected.forbiddenGreetings || [];
+  if (forbiddenGreetings.length > 0) {
+    const mimickedPhrases = forbiddenGreetings.filter((phrase) =>
+      replyText.includes(phrase.toLowerCase())
+    );
+    const mimicryScore = mimickedPhrases.length === 0 ? 15 : 0;
+    breakdown.antiMimicry = {
+      score: mimicryScore,
+      mimickedPhrases,
+      tested: forbiddenGreetings.length
+    };
+    score += mimicryScore;
+  } else {
+    breakdown.antiMimicry = { score: 15, mimickedPhrases: [], tested: 0 };
+    score += 15;
+  }
+
+  // 4. Tone match (15 pts)
   const tone = expected.toneToTest || "professional";
   let toneScore = 0;
 
   if (tone === "professional") {
-    // Professional: no excessive slang, no emojis, formal greetings
     const hasSlang =
       replyText.includes("lol") ||
       replyText.includes("ur ") ||
       replyText.includes("u r ");
     const hasEmoji = /[\u{1F300}-\u{1F9FF}]/u.test(replyText);
-    toneScore = !hasSlang && !hasEmoji ? 20 : 10;
+    toneScore = !hasSlang && !hasEmoji ? 15 : 8;
   } else if (tone === "casual") {
-    // Casual: contractions OK, relaxed language OK
-    toneScore = 20;
+    toneScore = 15;
   }
 
   breakdown.toneMatch = {
@@ -348,7 +365,7 @@ function scoreReply(result, expected) {
   };
   score += toneScore;
 
-  // 4. Length sanity (10 pts)
+  // 5. Length sanity (10 pts)
   const replyLength = replyText.length;
   const lengthScore =
     replyLength >= 50 && replyLength <= 1000 ? 10 : replyLength > 0 ? 5 : 0;
@@ -358,7 +375,7 @@ function scoreReply(result, expected) {
   };
   score += lengthScore;
 
-  // 5. Valid JSON parse (10 pts)
+  // 6. Valid JSON parse (10 pts)
   const hasReplyKey = "reply" in result && typeof result.reply === "string";
   const jsonScore = hasReplyKey ? 10 : 0;
   breakdown.validJson = {

@@ -6,7 +6,14 @@
       "tierLabel": "Simple single-sender",
       "description": "Single sender scheduling a meeting",
       "currentUser": "alice@example.com",
+      "metadata": {
+        "currentUser": "alice@example.com",
+        "from": "bob@example.com",
+        "to": ["alice@example.com"],
+        "subject": "Meeting Tomorrow"
+      },
       "thread": "From: Bob <bob@example.com>\nDate: Mar 20, 2026\nSubject: Meeting Tomorrow\n\nHi Alice,\n\nLet's meet tomorrow at 3pm in Conference Room 201 to review the Q1 numbers.\n\nPlease bring the revenue spreadsheet.\n\nThanks,\nBob",
+      "structuredThread": "From: bob@example.com (Bob)\nTo: alice@example.com\nDate: Mar 20, 2026\n[Latest — you are replying to this]\n\nHi Alice,\n\nLet's meet tomorrow at 3pm in Conference Room 201 to review the Q1 numbers.\n\nPlease bring the revenue spreadsheet.\n\nThanks,\nBob",
       "expected": {
         "summary": {
           "mustInclude": ["meeting", "3pm", "Conference Room 201", "Q1", "revenue spreadsheet"],
@@ -39,7 +46,14 @@
       "tierLabel": "Simple single-sender",
       "description": "Newsletter/FYI email about product launch",
       "currentUser": "alice@example.com",
+      "metadata": {
+        "currentUser": "alice@example.com",
+        "from": "marketing@company.com",
+        "to": ["alice@example.com"],
+        "subject": "New Product Launch - FYI"
+      },
       "thread": "From: Marketing <marketing@company.com>\nDate: Mar 19, 2026\nSubject: New Product Launch - FYI\n\nTeam,\n\nJust wanted to give you a heads up that our new mobile app launches next week on March 28th. The app will be available on iOS and Android.\n\nFYI only - no action needed from your side.\n\nBest,\nMarketing Team",
+      "structuredThread": "From: marketing@company.com (Marketing)\nTo: alice@example.com\nDate: Mar 19, 2026\n[Latest — you are replying to this]\n\nTeam,\n\nJust wanted to give you a heads up that our new mobile app launches next week on March 28th. The app will be available on iOS and Android.\n\nFYI only - no action needed from your side.\n\nBest,\nMarketing Team",
       "expected": {
         "summary": {
           "mustInclude": ["product launch", "March 28", "mobile app", "iOS", "Android"],
@@ -66,7 +80,14 @@
       "tierLabel": "Two-party conversation",
       "description": "Alice asks Bob to take over a task, Bob asks clarifying questions",
       "currentUser": "alice@example.com",
+      "metadata": {
+        "currentUser": "alice@example.com",
+        "from": "bob@example.com",
+        "to": ["alice@example.com"],
+        "subject": "Need to hand off project management"
+      },
       "thread": "From: Alice <alice@example.com>\nDate: Mar 18, 2026\nSubject: Need to hand off project management\n\nHi Bob,\n\nI'm swamped with the new initiative and need to hand off the client dashboard project to you. It's due on April 5th. The client has requested custom analytics widgets.\n\nCan you take it over?\n\nAlice\n\n---\n\nFrom: Bob <bob@example.com>\nDate: Mar 18, 2026\n\nHi Alice,\n\nI can take it over. Quick questions:\n1. Who is the client contact?\n2. Do we have the current codebase?\n3. What's the budget?\n\nThanks,\nBob",
+      "structuredThread": "From: alice@example.com (Alice (You))\nTo: bob@example.com\nDate: Mar 18, 2026, 9:00 AM\n\nHi Bob,\n\nI'm swamped with the new initiative and need to hand off the client dashboard project to you. It's due on April 5th. The client has requested custom analytics widgets.\n\nCan you take it over?\n\nAlice\n\n────────────────────────────────────────\nFrom: bob@example.com (Bob)\nTo: alice@example.com\nDate: Mar 18, 2026, 10:15 AM\n[Latest — you are replying to this]\n\nHi Alice,\n\nI can take it over. Quick questions:\n1. Who is the client contact?\n2. Do we have the current codebase?\n3. What's the budget?\n\nThanks,\nBob",
       "expected": {
         "summary": {
           "mustInclude": ["handoff", "project management", "client dashboard", "April 5", "analytics widgets"],
@@ -99,7 +120,14 @@
       "tierLabel": "Two-party conversation",
       "description": "Engineer reports bug, lead asks for reproduction steps",
       "currentUser": "alice@example.com",
+      "metadata": {
+        "currentUser": "alice@example.com",
+        "from": "charlie@example.com",
+        "to": ["alice@example.com"],
+        "subject": "Bug: Login page crashes on mobile"
+      },
       "thread": "From: Charlie <charlie@example.com>\nDate: Mar 17, 2026\nSubject: Bug: Login page crashes on mobile\n\nHey Alice,\n\nFound a critical bug - the login page crashes when users try to sign in from mobile Safari. This is blocking our iOS users.\n\nI've attached the error logs.\n\nCharlie\n\n---\n\nFrom: Alice <alice@example.com>\nDate: Mar 17, 2026\n\nHi Charlie,\n\nThanks for catching this. Can you provide:\n1. Steps to reproduce\n2. Device/OS version\n3. Any recent changes to the login form?\n\nLet's prioritize this for tomorrow.\n\nAlice",
+      "structuredThread": "From: charlie@example.com (Charlie)\nTo: alice@example.com\nDate: Mar 17, 2026, 11:30 AM\n\nHey Alice,\n\nFound a critical bug - the login page crashes when users try to sign in from mobile Safari. This is blocking our iOS users.\n\nI've attached the error logs.\n\nCharlie\n\n────────────────────────────────────────\nFrom: alice@example.com (Alice (You))\nTo: charlie@example.com\nDate: Mar 17, 2026, 2:45 PM\n[Your last message — draft a follow-up]\n\nHi Charlie,\n\nThanks for catching this. Can you provide:\n1. Steps to reproduce\n2. Device/OS version\n3. Any recent changes to the login form?\n\nLet's prioritize this for tomorrow.\n\nAlice",
       "expected": {
         "summary": {
           "mustInclude": ["bug", "login page", "crash", "mobile", "Safari"],
@@ -132,7 +160,14 @@
       "tierLabel": "Multi-sender thread",
       "description": "3 people discuss project timeline with conflicting deadlines",
       "currentUser": "alice@example.com",
+      "metadata": {
+        "currentUser": "alice@example.com",
+        "from": "diana@example.com",
+        "to": ["alice@example.com", "bob@example.com"],
+        "subject": "Project Timeline - Need Buy-In"
+      },
       "thread": "From: Alice <alice@example.com>\nDate: Mar 16, 2026\nSubject: Project Timeline - Need Buy-In\n\nTeam,\n\nHere's the proposed timeline for Phase 2:\n- Design: March 25 - April 5\n- Development: April 8 - May 15\n- Testing: May 18 - May 28\n\nThis keeps us on track for the June 1 launch.\n\nAlice\n\n---\n\nFrom: Bob <bob@example.com>\nDate: Mar 16, 2026\n\nAlice, the dev timeline is aggressive. We only have 5 devs. I'd push it to May 20 - June 10.\n\nBob\n\n---\n\nFrom: Diana <diana@example.com>\nDate: Mar 16, 2026\n\nI agree with Alice's timeline - we can't slip June 1. We need to hire a contractor. I'll coordinate that.\n\nDiana",
+      "structuredThread": "From: alice@example.com (Alice (You))\nTo: bob@example.com, diana@example.com\nDate: Mar 16, 2026, 9:00 AM\n\nTeam,\n\nHere's the proposed timeline for Phase 2:\n- Design: March 25 - April 5\n- Development: April 8 - May 15\n- Testing: May 18 - May 28\n\nThis keeps us on track for the June 1 launch.\n\nAlice\n\n────────────────────────────────────────\nFrom: bob@example.com (Bob)\nTo: alice@example.com, diana@example.com\nDate: Mar 16, 2026, 10:30 AM\n\nAlice, the dev timeline is aggressive. We only have 5 devs. I'd push it to May 20 - June 10.\n\nBob\n\n────────────────────────────────────────\nFrom: diana@example.com (Diana)\nTo: alice@example.com, bob@example.com\nDate: Mar 16, 2026, 11:45 AM\n[Latest — you are replying to this]\n\nI agree with Alice's timeline - we can't slip June 1. We need to hire a contractor. I'll coordinate that.\n\nDiana",
       "expected": {
         "summary": {
           "mustInclude": ["Phase 2", "Design", "Development", "Testing", "June 1"],
@@ -165,7 +200,14 @@
       "tierLabel": "Multi-sender thread",
       "description": "Design review with 3 reviewers giving different feedback",
       "currentUser": "alice@example.com",
+      "metadata": {
+        "currentUser": "alice@example.com",
+        "from": "diana@example.com",
+        "to": ["alice@example.com", "bob@example.com", "charlie@example.com"],
+        "subject": "Design Review: New Dashboard"
+      },
       "thread": "From: Alice <alice@example.com>\nDate: Mar 15, 2026\nSubject: Design Review: New Dashboard\n\nTeam,\n\nPlease review the attached mockup for the new analytics dashboard.\n\nAlice\n\n---\n\nFrom: Bob <bob@example.com>\nDate: Mar 15, 2026\n\nThe layout is clean, but the color contrast on the charts needs work. WCAG AA compliance is required.\n\nBob\n\n---\n\nFrom: Charlie <charlie@example.com>\nDate: Mar 15, 2026\n\nI love the design. One thing - can we add export to PDF functionality?\n\nCharlie\n\n---\n\nFrom: Diana <diana@example.com>\nDate: Mar 15, 2026\n\nAlice, can you revise based on Bob's accessibility feedback and add Charlie's export feature? Timeline is tight - need this done by March 22.\n\nDiana",
+      "structuredThread": "From: alice@example.com (Alice (You))\nTo: bob@example.com, charlie@example.com, diana@example.com\nDate: Mar 15, 2026, 9:00 AM\n\nTeam,\n\nPlease review the attached mockup for the new analytics dashboard.\n\nAlice\n\n────────────────────────────────────────\nFrom: bob@example.com (Bob)\nTo: alice@example.com, charlie@example.com, diana@example.com\nDate: Mar 15, 2026, 10:20 AM\n\nThe layout is clean, but the color contrast on the charts needs work. WCAG AA compliance is required.\n\nBob\n\n────────────────────────────────────────\nFrom: charlie@example.com (Charlie)\nTo: alice@example.com, bob@example.com, diana@example.com\nDate: Mar 15, 2026, 11:05 AM\n\nI love the design. One thing - can we add export to PDF functionality?\n\nCharlie\n\n────────────────────────────────────────\nFrom: diana@example.com (Diana)\nTo: alice@example.com, bob@example.com, charlie@example.com\nDate: Mar 15, 2026, 2:30 PM\n[Latest — you are replying to this]\n\nAlice, can you revise based on Bob's accessibility feedback and add Charlie's export feature? Timeline is tight - need this done by March 22.\n\nDiana",
       "expected": {
         "summary": {
           "mustInclude": ["dashboard", "design review", "accessibility", "export", "PDF"],
@@ -198,7 +240,14 @@
       "tierLabel": "Informal/messy",
       "description": "Informal conversation with abbreviations, typos, emojis",
       "currentUser": "alice@example.com",
+      "metadata": {
+        "currentUser": "alice@example.com",
+        "from": "bob@example.com",
+        "to": ["alice@example.com"],
+        "subject": "re: quick sync"
+      },
       "thread": "From: Bob <bob@example.com>\nDate: Mar 14, 2026\nSubject: re: quick sync\n\nyo alice!\n\nthanks for the heads up. yeah sounds good 4 the mtg tmrw @ 2pm. gonna bring my laptop & notes.\n\nbtw did u see the new api docs? they're 🔥 fr fr\n\n-bob\n\n---\n\nFrom: Alice <alice@example.com>\nDate: Mar 14, 2026\n\nlol yeah the docs r fire 🚀. also pls review the pr when u get a chance. thx!\n\nalice",
+      "structuredThread": "From: bob@example.com (Bob)\nTo: alice@example.com\nDate: Mar 14, 2026, 3:00 PM\n\nyo alice!\n\nthanks for the heads up. yeah sounds good 4 the mtg tmrw @ 2pm. gonna bring my laptop & notes.\n\nbtw did u see the new api docs? they're 🔥 fr fr\n\n-bob\n\n────────────────────────────────────────\nFrom: alice@example.com (Alice (You))\nTo: bob@example.com\nDate: Mar 14, 2026, 3:20 PM\n[Your last message — draft a follow-up]\n\nlol yeah the docs r fire 🚀. also pls review the pr when u get a chance. thx!\n\nalice",
       "expected": {
         "summary": {
           "mustInclude": ["meeting", "2pm", "api docs"],
@@ -231,7 +280,14 @@
       "tierLabel": "Informal/messy",
       "description": "Forwarded email with FYI wrapping original thread",
       "currentUser": "alice@example.com",
+      "metadata": {
+        "currentUser": "alice@example.com",
+        "from": "charlie@example.com",
+        "to": ["alice@example.com"],
+        "subject": "FWD: Vendor Invoice - Action Needed"
+      },
       "thread": "From: Charlie <charlie@example.com>\nDate: Mar 14, 2026\nSubject: FWD: Vendor Invoice - Action Needed\n\nFYI - see the details below. We need to process this by EOW.\n\n---------- Forwarded message ---------\nFrom: Vendor Billing <billing@vendor.com>\nDate: Mar 13, 2026\nSubject: Invoice #INV-2026-0847\n\nHi,\n\nPlease find the attached invoice for Q1 services. Total due: $45,000. Payment due by March 30.\n\nPlease confirm receipt.\n\nThanks,\nVendor Team",
+      "structuredThread": "From: charlie@example.com (Charlie)\nTo: alice@example.com\nDate: Mar 14, 2026, 8:45 AM\n[Latest — you are replying to this]\n\nFYI - see the details below. We need to process this by EOW.\n\n---------- Forwarded message ---------\nFrom: Vendor Billing <billing@vendor.com>\nDate: Mar 13, 2026\nSubject: Invoice #INV-2026-0847\n\nHi,\n\nPlease find the attached invoice for Q1 services. Total due: $45,000. Payment due by March 30.\n\nPlease confirm receipt.\n\nThanks,\nVendor Team",
       "expected": {
         "summary": {
           "mustInclude": ["invoice", "Q1", "$45,000", "March 30"],
@@ -264,7 +320,14 @@
       "tierLabel": "Long complex thread",
       "description": "C-suite thread about budget reallocation with conflicting priorities",
       "currentUser": "alice@example.com",
+      "metadata": {
+        "currentUser": "alice@example.com",
+        "from": "charlie@example.com",
+        "to": ["alice@example.com", "bob@example.com", "diana@example.com"],
+        "subject": "URGENT: Q2 Budget Reallocation"
+      },
       "thread": "From: Alice <alice@example.com>\nDate: Mar 12, 2026\nSubject: URGENT: Q2 Budget Reallocation\n\nLeadership,\n\nDue to the product delays, we need to reallocate $200K from marketing to engineering. This impacts:\n- Marketing: Cut events budget by 40%\n- Engineering: Add 2 contractors\n- Sales: Preserve current headcount\n\nNeed decision by EOD tomorrow.\n\nAlice\n\n---\n\nFrom: Bob <bob@example.com>\nDate: Mar 12, 2026\n\nAlice, cutting events kills our pipeline momentum. Can we cut differently? Maybe reduce contractor spend elsewhere?\n\nBob (VP Sales)\n\n---\n\nFrom: Diana <diana@example.com>\nDate: Mar 12, 2026\n\nI support Alice's plan. Engineering is the blocker. We risk launch if we don't invest now.\n\nDiana (VP Eng)\n\n---\n\nFrom: Charlie <charlie@example.com>\nDate: Mar 12, 2026\n\nI need to see the numbers. Which contractors are we cutting? What's the ROI?\n\nCharlie (CFO)\n\n---\n\nFrom: Alice <alice@example.com>\nDate: Mar 12, 2026\n\nCharlie - full breakdown attached. Diana - can you ID which contractors to hire? Bob - we can revisit events after launch.\n\nAlice",
+      "structuredThread": "From: alice@example.com (Alice (You))\nTo: bob@example.com, diana@example.com, charlie@example.com\nDate: Mar 12, 2026, 8:00 AM\n\nLeadership,\n\nDue to the product delays, we need to reallocate $200K from marketing to engineering. This impacts:\n- Marketing: Cut events budget by 40%\n- Engineering: Add 2 contractors\n- Sales: Preserve current headcount\n\nNeed decision by EOD tomorrow.\n\nAlice\n\n────────────────────────────────────────\nFrom: bob@example.com (Bob)\nTo: alice@example.com, diana@example.com, charlie@example.com\nDate: Mar 12, 2026, 9:15 AM\n\nAlice, cutting events kills our pipeline momentum. Can we cut differently? Maybe reduce contractor spend elsewhere?\n\nBob (VP Sales)\n\n────────────────────────────────────────\nFrom: diana@example.com (Diana)\nTo: alice@example.com, bob@example.com, charlie@example.com\nDate: Mar 12, 2026, 10:00 AM\n\nI support Alice's plan. Engineering is the blocker. We risk launch if we don't invest now.\n\nDiana (VP Eng)\n\n────────────────────────────────────────\nFrom: charlie@example.com (Charlie)\nTo: alice@example.com, bob@example.com, diana@example.com\nDate: Mar 12, 2026, 11:30 AM\n\nI need to see the numbers. Which contractors are we cutting? What's the ROI?\n\nCharlie (CFO)\n\n────────────────────────────────────────\nFrom: alice@example.com (Alice (You))\nTo: bob@example.com, diana@example.com, charlie@example.com\nDate: Mar 12, 2026, 2:00 PM\n[Your last message — draft a follow-up]\n\nCharlie - full breakdown attached. Diana - can you ID which contractors to hire? Bob - we can revisit events after launch.\n\nAlice",
       "expected": {
         "summary": {
           "mustInclude": ["budget reallocation", "$200K", "marketing", "engineering", "contractors"],
@@ -302,7 +365,14 @@
       "tierLabel": "Long complex thread",
       "description": "Incident thread with status updates and resolution steps",
       "currentUser": "alice@example.com",
+      "metadata": {
+        "currentUser": "alice@example.com",
+        "from": "alice@example.com",
+        "to": ["alice@example.com", "charlie@example.com", "bob@example.com", "diana@example.com"],
+        "subject": "CRITICAL: Database Performance Degradation"
+      },
       "thread": "From: Alert System <alerts@monitoring.com>\nDate: Mar 11, 2026 14:05\nSubject: CRITICAL: Database Performance Degradation\n\nDatabase response times > 5 seconds. 500+ errors/min. Incident declared.\n\n---\n\nFrom: Alice <alice@example.com>\nDate: Mar 11, 2026 14:10\n\nTeam - I'm declaring SEV-1. Charlie, can you check replication lag? Bob, can you scale DB? Diana, comms to customers.\n\n---\n\nFrom: Charlie <charlie@example.com>\nDate: Mar 11, 2026 14:25\n\nReplication lag is at 10s - that's the culprit. Full resync needed. ETA 30 mins.\n\n---\n\nFrom: Bob <bob@example.com>\nDate: Mar 11, 2026 14:30\n\nScaling up 4 more DB instances now. Should help with load distribution.\n\n---\n\nFrom: Diana <diana@example.com>\nDate: Mar 11, 2026 14:35\n\nCustomers notified. Status page updated to INVESTIGATING. We're monitoring Slack.\n\n---\n\nFrom: Alice <alice@example.com>\nDate: Mar 11, 2026 15:00\n\nUpdate: replication resolved. Error rate dropping. Keep watching. Post-incident review tomorrow at 10am. Charlie - can you lead RCA? Bob - document the scaling process. Diana - compile customer impact report.\n\nGreat work team!",
+      "structuredThread": "From: alerts@monitoring.com (Alert System)\nTo: alice@example.com, charlie@example.com, bob@example.com, diana@example.com\nDate: Mar 11, 2026, 2:05 PM\n\nDatabase response times > 5 seconds. 500+ errors/min. Incident declared.\n\n────────────────────────────────────────\nFrom: alice@example.com (Alice (You))\nTo: charlie@example.com, bob@example.com, diana@example.com\nDate: Mar 11, 2026, 2:10 PM\n\nTeam - I'm declaring SEV-1. Charlie, can you check replication lag? Bob, can you scale DB? Diana, comms to customers.\n\n────────────────────────────────────────\nFrom: charlie@example.com (Charlie)\nTo: alice@example.com, bob@example.com, diana@example.com\nDate: Mar 11, 2026, 2:25 PM\n\nReplication lag is at 10s - that's the culprit. Full resync needed. ETA 30 mins.\n\n────────────────────────────────────────\nFrom: bob@example.com (Bob)\nTo: alice@example.com, charlie@example.com, diana@example.com\nDate: Mar 11, 2026, 2:30 PM\n\nScaling up 4 more DB instances now. Should help with load distribution.\n\n────────────────────────────────────────\nFrom: diana@example.com (Diana)\nTo: alice@example.com, charlie@example.com, bob@example.com\nDate: Mar 11, 2026, 2:35 PM\n\nCustomers notified. Status page updated to INVESTIGATING. We're monitoring Slack.\n\n────────────────────────────────────────\nFrom: alice@example.com (Alice (You))\nTo: charlie@example.com, bob@example.com, diana@example.com\nDate: Mar 11, 2026, 3:00 PM\n[Your last message — draft a follow-up]\n\nUpdate: replication resolved. Error rate dropping. Keep watching. Post-incident review tomorrow at 10am. Charlie - can you lead RCA? Bob - document the scaling process. Diana - compile customer impact report.\n\nGreat work team!",
       "expected": {
         "summary": {
           "mustInclude": ["database", "incident", "replication", "scaling", "resolved"],
@@ -334,6 +404,122 @@
         },
         "reply": {
           "mustAddress": ["resolution", "next steps"],
+          "forbiddenContent": [],
+          "toneToTest": "professional"
+        }
+      }
+    },
+    {
+      "id": "t3_mimicry_trap",
+      "tier": 3,
+      "tierLabel": "Anti-mimicry test",
+      "description": "Promotional email with distinctive sender greeting that the reply must NOT copy",
+      "currentUser": "bhumij@example.com",
+      "metadata": {
+        "currentUser": "bhumij@example.com",
+        "from": "sales@luxuryresorts.com",
+        "to": ["bhumij@example.com"],
+        "subject": "Exclusive Offer for Esteemed Guest"
+      },
+      "thread": "From: sales@luxuryresorts.com <sales@luxuryresorts.com>\nDate: Mar 20, 2026\nSubject: Exclusive Offer for Esteemed Guest\n\nDear Most Esteemed and Valued Guest,\n\nGreetings from Luxury Resorts International!\n\nAs a distinguished patron, you are cordially invited to experience our Grand Presidential Suite at an exclusive 30% discount.\n\nThis limited-time offer is valid until March 30, 2026.\n\nWarmest Regards,\nThe Luxury Resorts Concierge Team",
+      "structuredThread": "From: sales@luxuryresorts.com (Luxury Resorts)\nTo: bhumij@example.com\nDate: Mar 20, 2026, 10:00 AM\n[Latest — you are replying to this]\n\nDear Most Esteemed and Valued Guest,\n\nGreetings from Luxury Resorts International!\n\nAs a distinguished patron, you are cordially invited to experience our Grand Presidential Suite at an exclusive 30% discount.\n\nThis limited-time offer is valid until March 30, 2026.\n\nWarmest Regards,\nThe Luxury Resorts Concierge Team",
+      "expected": {
+        "summary": {
+          "mustInclude": ["luxury", "suite", "30%", "March 30"],
+          "bulletCountRange": [1, 4]
+        },
+        "category": {
+          "expected": "Newsletter / Promotional",
+          "acceptableAlternatives": ["Other"]
+        },
+        "actionItems": {
+          "items": [],
+          "countRange": [0, 1]
+        },
+        "reply": {
+          "mustAddress": ["offer", "interest"],
+          "forbiddenContent": [],
+          "forbiddenGreetings": ["dear most esteemed", "dear esteemed", "valued guest", "distinguished patron", "greetings from"],
+          "toneToTest": "professional"
+        }
+      }
+    },
+    {
+      "id": "t2_followup_nudge",
+      "tier": 2,
+      "tierLabel": "Follow-up mode",
+      "description": "User's last message in thread, should draft a follow-up instead of replying to someone else",
+      "currentUser": "alice@example.com",
+      "metadata": {
+        "currentUser": "alice@example.com",
+        "from": "bob@example.com",
+        "to": ["alice@example.com"],
+        "subject": "Project Status Update",
+        "isFollowup": true
+      },
+      "thread": "From: Bob <bob@example.com>\nDate: Mar 19, 2026\nSubject: Project Status Update\n\nHi Alice,\n\nCan you send me an update on the dashboard project? We need to ensure it's on track for the April 5 deadline.\n\nThanks,\nBob\n\n---\n\nFrom: Alice <alice@example.com>\nDate: Mar 20, 2026\n\nHi Bob,\n\nThe dashboard is 60% complete. Design and API integration are done. We're currently working on the charting library integration, which should be finished by March 28th. After that, we'll move to testing.\n\nAlice",
+      "structuredThread": "From: bob@example.com (Bob)\nTo: alice@example.com\nDate: Mar 19, 2026, 4:00 PM\n\nHi Alice,\n\nCan you send me an update on the dashboard project? We need to ensure it's on track for the April 5 deadline.\n\nThanks,\nBob\n\n────────────────────────────────────────\nFrom: alice@example.com (Alice (You))\nTo: bob@example.com\nDate: Mar 20, 2026, 9:30 AM\n[Your last message — draft a follow-up]\n\nHi Bob,\n\nThe dashboard is 60% complete. Design and API integration are done. We're currently working on the charting library integration, which should be finished by March 28th. After that, we'll move to testing.\n\nAlice",
+      "expected": {
+        "summary": {
+          "mustInclude": ["dashboard", "60%", "charting library", "March 28", "testing"],
+          "bulletCountRange": [2, 5]
+        },
+        "category": {
+          "expected": "Update / FYI",
+          "acceptableAlternatives": ["Action Required"]
+        },
+        "actionItems": {
+          "items": [],
+          "countRange": [0, 1]
+        },
+        "reply": {
+          "mustAddress": ["checking in", "follow-up", "status"],
+          "forbiddenContent": ["restating previous context", "repeating all details"],
+          "toneToTest": "professional"
+        }
+      }
+    },
+    {
+      "id": "t3_vendor_negotiation",
+      "tier": 3,
+      "tierLabel": "Multi-party with CC",
+      "description": "Vendor contract negotiation with multiple To and CC recipients across messages",
+      "currentUser": "alice@example.com",
+      "metadata": {
+        "currentUser": "alice@example.com",
+        "from": "vendor@acmecorp.com",
+        "to": ["alice@example.com", "bob@example.com"],
+        "cc": ["legal@example.com", "finance@example.com"],
+        "subject": "Re: Annual SaaS Contract Renewal - Acme Corp"
+      },
+      "thread": "From: Alice <alice@example.com>\nDate: Mar 18, 2026\nSubject: Annual SaaS Contract Renewal - Acme Corp\n\nHi Priya,\n\nOur current contract with Acme Corp expires April 30. We'd like to renew but need to discuss pricing — the 15% increase proposed is above our budget.\n\nCopying Bob from procurement and our legal and finance teams for visibility.\n\nCan we set up a call this week?\n\nBest,\nAlice\n\n---\n\nFrom: Priya <vendor@acmecorp.com>\nDate: Mar 19, 2026\n\nHi Alice,\n\nThanks for reaching out. The 15% increase reflects added features (SSO, audit logs, priority support). Happy to discuss — how about Thursday 2pm?\n\nI'm also adding my manager Raj for approval authority.\n\nBest,\nPriya\n\n---\n\nFrom: Bob <bob@example.com>\nDate: Mar 19, 2026\n\nAlice, Priya — I've reviewed the current contract. A few points:\n1. We're paying $85K/yr currently\n2. The proposed $97.75K is $12.75K over budget\n3. Can we get the new features at a 8% increase instead?\n\nAlso looping in Diana from our security team since SSO is involved.\n\nBob\n\n---\n\nFrom: Priya <vendor@acmecorp.com>\nDate: Mar 20, 2026\n\nHi all,\n\nRaj has approved a 10% increase ($93.5K) if you commit to a 2-year term. This includes all new features.\n\nLet me know if this works. Contract draft attached for legal review.\n\nBest,\nPriya",
+      "structuredThread": "From: alice@example.com (Alice (You))\nTo: vendor@acmecorp.com\nCc: bob@example.com, legal@example.com, finance@example.com\nDate: Mar 18, 2026, 10:00 AM\n\nHi Priya,\n\nOur current contract with Acme Corp expires April 30. We'd like to renew but need to discuss pricing — the 15% increase proposed is above our budget.\n\nCopying Bob from procurement and our legal and finance teams for visibility.\n\nCan we set up a call this week?\n\nBest,\nAlice\n\n────────────────────────────────────────\nFrom: vendor@acmecorp.com (Priya)\nTo: alice@example.com\nCc: bob@example.com, legal@example.com, finance@example.com, raj@acmecorp.com\nDate: Mar 19, 2026, 9:30 AM\n\nHi Alice,\n\nThanks for reaching out. The 15% increase reflects added features (SSO, audit logs, priority support). Happy to discuss — how about Thursday 2pm?\n\nI'm also adding my manager Raj for approval authority.\n\nBest,\nPriya\n\n────────────────────────────────────────\nFrom: bob@example.com (Bob)\nTo: alice@example.com, vendor@acmecorp.com\nCc: legal@example.com, finance@example.com, diana@example.com\nDate: Mar 19, 2026, 2:15 PM\n\nAlice, Priya — I've reviewed the current contract. A few points:\n1. We're paying $85K/yr currently\n2. The proposed $97.75K is $12.75K over budget\n3. Can we get the new features at a 8% increase instead?\n\nAlso looping in Diana from our security team since SSO is involved.\n\nBob\n\n────────────────────────────────────────\nFrom: vendor@acmecorp.com (Priya)\nTo: alice@example.com, bob@example.com\nCc: legal@example.com, finance@example.com, diana@example.com, raj@acmecorp.com\nDate: Mar 20, 2026, 11:00 AM\n[Latest — you are replying to this]\n\nHi all,\n\nRaj has approved a 10% increase ($93.5K) if you commit to a 2-year term. This includes all new features.\n\nLet me know if this works. Contract draft attached for legal review.\n\nBest,\nPriya",
+      "expected": {
+        "summary": {
+          "mustInclude": ["contract renewal", "Acme Corp", "15%", "10%", "$93.5K", "2-year"],
+          "bulletCountRange": [3, 6]
+        },
+        "category": {
+          "expected": "Action Required",
+          "acceptableAlternatives": ["Request"]
+        },
+        "actionItems": {
+          "items": [
+            {
+              "taskKeywords": ["review", "contract", "legal"],
+              "expectedOwner": null,
+              "expectedPriority": "High"
+            },
+            {
+              "taskKeywords": ["approve", "pricing", "budget"],
+              "expectedOwner": "Alice",
+              "expectedPriority": "High"
+            }
+          ],
+          "countRange": [2, 4]
+        },
+        "reply": {
+          "mustAddress": ["pricing", "2-year term", "contract"],
           "forbiddenContent": [],
           "toneToTest": "professional"
         }

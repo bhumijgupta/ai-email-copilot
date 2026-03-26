@@ -24,6 +24,7 @@ function initialize() {
   injectStyles();
   injectPanel();
   injectActionBar();
+  listenForDebugToggle();
 
   // Gmail is an SPA — poll for URL / DOM changes
   setInterval(checkForThreadView, 1000);
@@ -31,6 +32,20 @@ function initialize() {
   // Also use MutationObserver as a faster secondary trigger
   const observer = new MutationObserver(() => checkForThreadView());
   observer.observe(document.body, { childList: true, subtree: true });
+}
+
+/**
+ * Bridge for toggling debug mode from the Gmail page console.
+ * Usage:  window.postMessage({ type: "__GMAIL_COPILOT_DEBUG", enabled: true })
+ */
+function listenForDebugToggle() {
+  window.addEventListener("message", (event) => {
+    if (event.source !== window || event.data?.type !== "__GMAIL_COPILOT_DEBUG") return;
+    const enabled = !!event.data.enabled;
+    chrome.runtime.sendMessage({ action: "SET_DEBUG_MODE", enabled }, (res) => {
+      console.log(`[AI Copilot] Debug mode ${enabled ? "ON" : "OFF"}`, res);
+    });
+  });
 }
 
 // ─── Thread Detection ─────────────────────────────────────────────
@@ -148,8 +163,17 @@ async function handleButtonClick(action) {
   showPanelLoading("Expanding thread...");
 
   try {
-    const thread = await getEmailThread();
     const metadata = getEmailMetadata();
+
+    // For REPLY, use structured thread with sender headers; for others, use raw thread
+    let thread;
+    if (action === "REPLY" || action === "YOUR_BRAIN_REPLY") {
+      const result = await getStructuredThread();
+      thread = result.text;
+      metadata.isFollowup = result.isFollowup;
+    } else {
+      thread = await getEmailThread();
+    }
 
     if (!thread || thread.length < 10) {
       showNotification("Could not read the email thread. The thread appears to be empty.", "error");
@@ -161,6 +185,7 @@ async function handleButtonClick(action) {
     const friendlyName = {
       SUMMARISE: "Summarising thread",
       REPLY: "Generating reply",
+      YOUR_BRAIN_REPLY: "Generating reply (Your Brain)",
       CATEGORISE: "Categorising email",
       ACTION_ITEMS: "Extracting action items"
     };
@@ -170,10 +195,12 @@ async function handleButtonClick(action) {
       {
         action,
         thread,
+        structuredThread: action === "REPLY" || action === "YOUR_BRAIN_REPLY" ? thread : undefined,
         summary: `${metadata.subject}\n\n${thread}`,
         email: thread,
         tone: "professional",
-        currentUser: metadata.currentUser
+        currentUser: metadata.currentUser,
+        metadata
       },
       (response) => {
         if (chrome.runtime.lastError) {

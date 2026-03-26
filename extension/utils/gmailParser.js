@@ -222,7 +222,7 @@ async function getEmailThread() {
     if (messageBodies.length === 0) {
       console.warn(`[Gmail Copilot] WARNING: No message bodies found after expansion!`);
       console.warn(`[Gmail Copilot] Available .a3s elements: ${document.querySelectorAll('.a3s').length}`);
-      return "No email thread found";
+      return "";
     }
 
     const threadText = Array.from(messageBodies)
@@ -243,36 +243,64 @@ async function getEmailThread() {
 
 /**
  * Extract email metadata (subject, sender, recipients, current user)
- * @returns {object} Email metadata including currentUser
+ * from the last visible message in the thread.
+ * @returns {object} Email metadata including currentUser, from, to, cc
  */
 function getEmailMetadata() {
   try {
-    // Gmail subject is typically in h2 with data-subject-threading attribute
-    const subjectElement = document.querySelector('h2[data-subject-threading]');
-    const subject = subjectElement ? subjectElement.innerText : "No subject";
+    // Gmail renders the subject in various h2 elements depending on version/layout.
+    const subjectElement =
+      document.querySelector('h2[data-subject-threading]') ||
+      document.querySelector('h2.hP') ||
+      document.querySelector('h2[data-thread-perm-id]') ||
+      document.querySelector('[role="main"] h2');
+    const subject = subjectElement ? subjectElement.innerText.trim() : "No subject";
 
-    // Get current user email
     const currentUser = getCurrentUserEmail();
 
-    // Collect all participant emails from thread
-    const senderElements = document.querySelectorAll('[email]');
-    const senders = Array.from(senderElements)
-      .map(el => el.getAttribute("email"))
-      .filter(Boolean)
-      .filter((email, index, arr) => arr.indexOf(email) === index); // Deduplicate
+    // Focus on the last message container for thread-level from/to/cc/date
+    const messageContainers = document.querySelectorAll('[role="main"] .gs');
+    const lastContainer = messageContainers.length > 0
+      ? messageContainers[messageContainers.length - 1]
+      : null;
 
-    // Separate current user from other participants
-    const participants = senders.filter(email => email !== currentUser);
-    const from = senders[0] || "Unknown sender";
-    const to = participants;
+    let from = "Unknown sender";
+    let to = [];
+    let cc = [];
+    let timestamp = "";
+
+    if (lastContainer) {
+      const senderEl = lastContainer.querySelector('.gD[email], [email]');
+      if (senderEl) {
+        from = senderEl.getAttribute('email') || from;
+      }
+
+      const recipients = extractRecipients(lastContainer);
+      to = recipients.to;
+      cc = recipients.cc;
+      timestamp = extractTimestamp(lastContainer);
+    }
+
+    // Fallback: if we couldn't extract to from the DOM, collect all unique
+    // emails excluding from and currentUser
+    if (to.length === 0) {
+      const allEmails = Array.from(document.querySelectorAll('[role="main"] [email]'))
+        .map(el => el.getAttribute('email'))
+        .filter(Boolean);
+      const unique = [...new Set(allEmails)];
+      to = unique.filter(e => e !== from && e !== currentUser);
+    }
+
+    const participants = [...new Set([from, ...to, ...cc].filter(Boolean))];
 
     return {
       subject,
       currentUser,
       from,
       to,
-      participants: senders,
-      timestamp: new Date().toISOString()
+      cc,
+      participants,
+      timestamp: timestamp || new Date().toISOString()
     };
   } catch (error) {
     console.error("Error extracting email metadata:", error);
@@ -281,6 +309,7 @@ function getEmailMetadata() {
       currentUser: "Unknown",
       from: "Unknown",
       to: [],
+      cc: [],
       participants: [],
       timestamp: new Date().toISOString()
     };
@@ -322,12 +351,51 @@ function insertIntoReply(text) {
 }
 
 /**
- * Extract individual messages from the thread with sender info.
- * Returns an array of { sender, senderEmail, body, isMe } objects.
+ * Extract to/cc recipients from a message container's span.hb elements.
+ * @param {Element} container - A .gs message container
+ * @returns {{ to: string[], cc: string[] }}
+ */
+function extractRecipients(container) {
+  const to = [];
+  const cc = [];
+  const hbSpans = container.querySelectorAll('span.hb');
+  for (const hb of hbSpans) {
+    const rawText = (hb.childNodes[0]?.textContent || "").trim().toLowerCase();
+    const emails = Array.from(hb.querySelectorAll('[email]'))
+      .map(el => el.getAttribute('email'))
+      .filter(Boolean);
+    if (rawText.startsWith('to')) {
+      to.push(...emails);
+    } else if (rawText.startsWith('cc')) {
+      cc.push(...emails);
+    }
+  }
+  return { to, cc };
+}
+
+/**
+ * Extract the timestamp from a message container.
+ * Gmail stores the full date in a span or abbr with a title attribute inside
+ * the message header (class "gH" or "gK"), e.g. title="Tue, Mar 24, 2026, 2:30 PM".
+ * @param {Element} container - A .gs message container
+ * @returns {string} Extracted date string or empty string
+ */
+function extractTimestamp(container) {
+  const dateEl =
+    container.querySelector('.gH .g3') ||
+    container.querySelector('.gH [title]') ||
+    container.querySelector('.gK [title]') ||
+    container.querySelector('span[title]');
+  if (dateEl) {
+    return (dateEl.getAttribute('title') || dateEl.innerText || "").trim();
+  }
+  return "";
+}
+
+/**
+ * Extract individual messages from the thread with per-message metadata.
+ * Returns an array of { sender, senderEmail, to, cc, timestamp, body, isMe }.
  * First expands all collapsed messages to ensure all thread content is available.
- *
- * Gmail marks the logged-in user's messages with data-message-id and
- * shows "me" or the user's own address in the header.
  */
 async function getIndividualMessages() {
   const results = [];
@@ -337,11 +405,7 @@ async function getIndividualMessages() {
     
     const currentUser = getCurrentUserEmail();
 
-    // Each top-level message container in a thread
-    // Gmail wraps each message in a div with class "gs"
     const messageContainers = document.querySelectorAll('[role="main"] .gs');
-
-    // Fallback: just pair up headers and bodies if .gs doesn't match
     const bodies = document.querySelectorAll(".a3s");
     if (messageContainers.length === 0 && bodies.length === 0) return results;
 
@@ -353,7 +417,6 @@ async function getIndividualMessages() {
         const bodyText = (body.innerText || "").trim();
         if (!bodyText) return;
 
-        // Sender name — Gmail uses .gD for the sender name span
         const senderSpan = container.querySelector(".gD, [email]");
         const senderName = senderSpan
           ? (senderSpan.getAttribute("name") || senderSpan.innerText || "").trim()
@@ -362,17 +425,17 @@ async function getIndividualMessages() {
           ? (senderSpan.getAttribute("email") || "").trim()
           : "";
 
-        // Determine if this message is from the current user using email comparison
         const isMe = senderEmail && currentUser && senderEmail.toLowerCase() === currentUser.toLowerCase();
+        const { to, cc } = extractRecipients(container);
+        const timestamp = extractTimestamp(container);
 
-        results.push({ sender: senderName, senderEmail, body: bodyText, isMe });
+        results.push({ sender: senderName, senderEmail, to, cc, timestamp, body: bodyText, isMe });
       });
     } else {
-      // Simpler fallback: just get bodies, no sender detection
       bodies.forEach(body => {
         const text = (body.innerText || "").trim();
         if (text) {
-          results.push({ sender: "Unknown", senderEmail: "", body: text, isMe: false });
+          results.push({ sender: "Unknown", senderEmail: "", to: [], cc: [], timestamp: "", body: text, isMe: false });
         }
       });
     }
@@ -381,6 +444,68 @@ async function getIndividualMessages() {
   }
 
   return results;
+}
+
+const MSG_SEPARATOR = "─".repeat(40);
+
+/**
+ * Extract thread with full per-message headers for context-aware AI operations.
+ * Each message includes From, To, Cc, Date headers and a visual separator
+ * so the model can clearly distinguish message boundaries.
+ * @returns {Promise<{text: string, isFollowup: boolean}>} Structured thread text and followup flag
+ */
+async function getStructuredThread() {
+  try {
+    const messages = await getIndividualMessages();
+    
+    if (messages.length === 0) {
+      return { text: "", isFollowup: false };
+    }
+
+    const parts = [];
+    const lastMsg = messages[messages.length - 1];
+    const isFollowup = lastMsg && lastMsg.isMe;
+
+    messages.forEach((msg, index) => {
+      if (index > 0) {
+        parts.push(MSG_SEPARATOR);
+      }
+
+      const displayName = msg.isMe ? `${msg.sender} (You)` : msg.sender;
+      const fromLine = msg.senderEmail
+        ? `From: ${msg.senderEmail} (${displayName})`
+        : `From: ${displayName}`;
+      parts.push(fromLine);
+
+      if (msg.to && msg.to.length > 0) {
+        parts.push(`To: ${msg.to.join(", ")}`);
+      }
+      if (msg.cc && msg.cc.length > 0) {
+        parts.push(`Cc: ${msg.cc.join(", ")}`);
+      }
+      if (msg.timestamp) {
+        parts.push(`Date: ${msg.timestamp}`);
+      }
+
+      const isLastMessage = index === messages.length - 1;
+      if (isLastMessage) {
+        parts.push(msg.isMe
+          ? "[Your last message — draft a follow-up]"
+          : "[Latest — you are replying to this]");
+      }
+
+      parts.push("");
+      parts.push(msg.body);
+      parts.push("");
+    });
+
+    const structuredText = parts.join("\n").trim();
+    console.debug(`[Gmail Copilot] Structured thread extracted (${messages.length} messages, ${structuredText.length} chars, isFollowup: ${isFollowup})`);
+    return { text: structuredText, isFollowup };
+  } catch (error) {
+    console.error("Error extracting structured thread:", error);
+    return { text: "", isFollowup: false };
+  }
 }
 
 /**

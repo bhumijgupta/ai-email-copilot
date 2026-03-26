@@ -312,6 +312,34 @@ ollama pull llama3
 - **Content script logs**: Open DevTools console on the Gmail tab (filter by `[Gmail Copilot]` for extension debug logs)
 - **Popup logs**: Right-click the extension icon → Inspect
 
+### Debug Mode (prompt/response logging)
+
+A hidden debug mode logs every prompt sent to Ollama and every raw response received. Useful for diagnosing bad outputs.
+
+**Activate from the Gmail tab console** (easiest):
+
+```js
+window.postMessage({ type: "__GMAIL_COPILOT_DEBUG", enabled: true })
+```
+
+**Activate from the service worker or popup console:**
+
+```js
+chrome.storage.local.set({ __debug_mode: true })
+```
+
+**View logs** — open the service worker console (`chrome://extensions` → Inspect service worker). Each AI call will show a collapsible group with the model, prompt, duration, raw response, and parsed JSON.
+
+**Deactivate:**
+
+```js
+// Gmail tab console
+window.postMessage({ type: "__GMAIL_COPILOT_DEBUG", enabled: false })
+
+// Or from service worker / popup console
+chrome.storage.local.set({ __debug_mode: false })
+```
+
 ### Local testing without zip
 
 ```bash

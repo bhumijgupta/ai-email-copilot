@@ -21,3 +21,9 @@ alwaysApply: false
 ## Storage Keys
 - Your Brain data uses `your_brain_*` prefix in `chrome.storage.local`.
 - Functions: `getYourBrainExamples`, `isYourBrainEnabled`, `setYourBrainEnabled`.
+
+## Eval Framework Sync
+When changing prompt builder signatures, thread data shapes, or AI parsing logic, **always update `eval/` in the same changeset**:
+- `eval/fixtures.json` — fixture `metadata`, `structuredThread`, and `expected` fields must match current prompt builder signatures.
+- `eval/runner.js` — `OPERATIONS` object maps fixtures to prompt builders; update if signatures change.
+- `eval/scorer.js` — scoring rubrics; update if new quality dimensions are introduced.

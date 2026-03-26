@@ -23,6 +23,12 @@ After any meaningful change, update docs **in the same changeset**:
 - `style-guide.md` — new components, changed tokens.
 - Never let feature names in docs diverge from code (renames must propagate).
 
+## Eval Framework
+When changing prompt templates, thread extraction, metadata shape, or AI response parsing, update the eval framework in the same changeset:
+- `eval/fixtures.json` — update `metadata`, `structuredThread`, and `expected` fields to match the new data shapes.
+- `eval/runner.js` — update `OPERATIONS` prompt builders if function signatures change.
+- `eval/scorer.js` — update scoring rubrics if new quality dimensions are added (e.g., anti-mimicry).
+
 ## Don'ts
 - Don't intercept Gmail's internal API requests (isolated world limitation).
 - Don't add npm dependencies or a build system.

@@ -5,7 +5,8 @@
 const STORAGE_KEYS = {
   PAST_EMAILS: "your_brain_past_emails",
   EDITED_RESPONSES: "your_brain_edited_responses",
-  MEMORY_ENABLED: "your_brain_enabled"
+  MEMORY_ENABLED: "your_brain_enabled",
+  DEBUG_MODE: "__debug_mode"
 };
 
 /**
@@ -202,5 +203,30 @@ async function clearMemory() {
       [STORAGE_KEYS.PAST_EMAILS, STORAGE_KEYS.EDITED_RESPONSES],
       resolve
     );
+  });
+}
+
+/**
+ * Check if debug mode is active.
+ * Activate from any extension devtools console:
+ *   chrome.storage.local.set({ __debug_mode: true })
+ * @returns {Promise<boolean>}
+ */
+async function isDebugMode() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get([STORAGE_KEYS.DEBUG_MODE], (result) => {
+      resolve(result[STORAGE_KEYS.DEBUG_MODE] === true);
+    });
+  });
+}
+
+/**
+ * Toggle debug mode on or off
+ * @param {boolean} enabled
+ * @returns {Promise<void>}
+ */
+async function setDebugMode(enabled) {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ [STORAGE_KEYS.DEBUG_MODE]: !!enabled }, resolve);
   });
 }
