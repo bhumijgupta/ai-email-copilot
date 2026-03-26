@@ -413,7 +413,7 @@
       "id": "t3_mimicry_trap",
       "tier": 3,
       "tierLabel": "Anti-mimicry test",
-      "description": "Promotional email with distinctive sender greeting that the reply must NOT copy",
+      "description": "Promotional email with distinctive sender greeting that the reply must NOT copy, while adopting the user's own greeting style",
       "currentUser": "bhumij@example.com",
       "metadata": {
         "currentUser": "bhumij@example.com",
@@ -421,8 +421,8 @@
         "to": ["bhumij@example.com"],
         "subject": "Exclusive Offer for Esteemed Guest"
       },
-      "thread": "From: sales@luxuryresorts.com <sales@luxuryresorts.com>\nDate: Mar 20, 2026\nSubject: Exclusive Offer for Esteemed Guest\n\nDear Most Esteemed and Valued Guest,\n\nGreetings from Luxury Resorts International!\n\nAs a distinguished patron, you are cordially invited to experience our Grand Presidential Suite at an exclusive 30% discount.\n\nThis limited-time offer is valid until March 30, 2026.\n\nWarmest Regards,\nThe Luxury Resorts Concierge Team",
-      "structuredThread": "From: sales@luxuryresorts.com (Luxury Resorts)\nTo: bhumij@example.com\nDate: Mar 20, 2026, 10:00 AM\n[Latest — you are replying to this]\n\nDear Most Esteemed and Valued Guest,\n\nGreetings from Luxury Resorts International!\n\nAs a distinguished patron, you are cordially invited to experience our Grand Presidential Suite at an exclusive 30% discount.\n\nThis limited-time offer is valid until March 30, 2026.\n\nWarmest Regards,\nThe Luxury Resorts Concierge Team",
+      "thread": "From: bhumij@example.com <bhumij@example.com>\nDate: Mar 18, 2026\nSubject: Enquiry about suites\n\nHi,\n\nI saw your ad for the Grand Presidential Suite. Could you send me more details about availability?\n\nThanks,\nBhumij\n\n---\n\nFrom: sales@luxuryresorts.com <sales@luxuryresorts.com>\nDate: Mar 20, 2026\nSubject: Exclusive Offer for Esteemed Guest\n\nDear Most Esteemed and Valued Guest,\n\nGreetings from Luxury Resorts International!\n\nAs a distinguished patron, you are cordially invited to experience our Grand Presidential Suite at an exclusive 30% discount.\n\nThis limited-time offer is valid until March 30, 2026.\n\nWarmest Regards,\nThe Luxury Resorts Concierge Team",
+      "structuredThread": "From: bhumij@example.com (Bhumij (You))\nTo: sales@luxuryresorts.com\nDate: Mar 18, 2026, 9:00 AM\n\nHi,\n\nI saw your ad for the Grand Presidential Suite. Could you send me more details about availability?\n\nThanks,\nBhumij\n\n────────────────────────────────────────\nFrom: sales@luxuryresorts.com (Luxury Resorts)\nTo: bhumij@example.com\nDate: Mar 20, 2026, 10:00 AM\n[Latest — you are replying to this]\n\nDear Most Esteemed and Valued Guest,\n\nGreetings from Luxury Resorts International!\n\nAs a distinguished patron, you are cordially invited to experience our Grand Presidential Suite at an exclusive 30% discount.\n\nThis limited-time offer is valid until March 30, 2026.\n\nWarmest Regards,\nThe Luxury Resorts Concierge Team",
       "expected": {
         "summary": {
           "mustInclude": ["luxury", "suite", "30%", "March 30"],
@@ -440,6 +440,7 @@
           "mustAddress": ["offer", "interest"],
           "forbiddenContent": [],
           "forbiddenGreetings": ["dear most esteemed", "dear esteemed", "valued guest", "distinguished patron", "greetings from"],
+          "expectedUserStyle": ["hi", "thanks"],
           "toneToTest": "professional"
         }
       }

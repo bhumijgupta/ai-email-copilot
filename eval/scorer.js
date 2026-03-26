@@ -280,7 +280,10 @@ function scoreActionItems(result, expected) {
  * Rubric:
  * - Addresses required topics (35 pts): % of mustAddress items reflected
  * - No forbidden content (15 pts): None of forbiddenContent appears
- * - Anti-mimicry (15 pts): Reply doesn't copy sender's distinctive greetings/sign-offs
+ * - Anti-mimicry (15 pts total):
+ *     - Negative (10 pts): Reply doesn't copy other party's distinctive greetings/sign-offs
+ *     - Positive (5 pts): Reply adopts the user's own greeting/sign-off style
+ *     (If expectedUserStyle absent, all 15 pts awarded via negative check alone)
  * - Tone match (15 pts): Simple heuristics based on toneToTest
  * - Length sanity (10 pts): Between 50 and 1000 chars
  * - Valid JSON parse (10 pts): Response was valid JSON with 'reply' key
@@ -326,23 +329,43 @@ function scoreReply(result, expected) {
   };
   score += forbiddenScore;
 
-  // 3. Anti-mimicry (15 pts): reply must not parrot the sender's greeting or sign-off
+  // 3. Anti-mimicry (15 pts total):
+  //    - Negative check: reply must not parrot the other party's greeting/sign-off
+  //    - Positive check: reply should adopt the user's own greeting/sign-off style
   const forbiddenGreetings = expected.forbiddenGreetings || [];
+  const expectedUserStyle = expected.expectedUserStyle || [];
+  const hasPositiveCheck = expectedUserStyle.length > 0;
+  const negativeMaxPts = hasPositiveCheck ? 10 : 15;
+  const positiveMaxPts = hasPositiveCheck ? 5 : 0;
+
+  let negativeScore = negativeMaxPts;
+  let mimickedPhrases = [];
   if (forbiddenGreetings.length > 0) {
-    const mimickedPhrases = forbiddenGreetings.filter((phrase) =>
+    mimickedPhrases = forbiddenGreetings.filter((phrase) =>
       replyText.includes(phrase.toLowerCase())
     );
-    const mimicryScore = mimickedPhrases.length === 0 ? 15 : 0;
-    breakdown.antiMimicry = {
-      score: mimicryScore,
-      mimickedPhrases,
-      tested: forbiddenGreetings.length
-    };
-    score += mimicryScore;
-  } else {
-    breakdown.antiMimicry = { score: 15, mimickedPhrases: [], tested: 0 };
-    score += 15;
+    negativeScore = mimickedPhrases.length === 0 ? negativeMaxPts : 0;
   }
+
+  let positiveScore = 0;
+  let adoptedMarkers = [];
+  if (hasPositiveCheck) {
+    adoptedMarkers = expectedUserStyle.filter((marker) =>
+      replyText.includes(marker.toLowerCase())
+    );
+    positiveScore = adoptedMarkers.length > 0
+      ? Math.round((adoptedMarkers.length / expectedUserStyle.length) * positiveMaxPts)
+      : 0;
+  }
+
+  breakdown.antiMimicry = {
+    score: negativeScore + positiveScore,
+    mimickedPhrases,
+    tested: forbiddenGreetings.length,
+    adoptedMarkers,
+    userStyleTested: expectedUserStyle.length
+  };
+  score += negativeScore + positiveScore;
 
   // 4. Tone match (15 pts)
   const tone = expected.toneToTest || "professional";
