@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AI Email Copilot",
-  "version": "1.1.0",
-  "description": "Summarise threads, generate replies, categorise emails & extract actions — all locally via Ollama.",
+  "version": "1.1.1",
+  "description": "Summarise, reply, categorise and extract actions from Gmail threads. Requires Ollama (ollama.ai) running locally.",
   "permissions": [
     "storage"
   ],

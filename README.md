@@ -2,6 +2,8 @@
 
 A Chrome Extension that enhances Gmail with AI-powered email analysis — all running **locally via Ollama**. No data ever leaves your machine.
 
+> **Prerequisite:** This extension requires [Ollama](https://ollama.ai) installed and running locally on your machine. Without Ollama, AI features will show a setup guide instead of results. See [Install Ollama](#install-ollama) below.
+
 ## Features
 
 - **Thread Summarization** — TL;DR, key decisions, open questions, and action items
@@ -259,7 +261,7 @@ Upload the zip at [Chrome Web Store Developer Console](https://chrome.google.com
 Edit `version` in `extension/manifest.json`, then run `./build.sh` again:
 
 ```json
-"version": "1.1.0"
+"version": "1.1.1"
 ```
 
 ## Privacy

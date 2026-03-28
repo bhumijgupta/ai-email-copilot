@@ -164,6 +164,41 @@ All buttons: 8px radius, 13px font, 500 weight, 8px 16px padding.
 - Shadow: elevation 2.
 - Background: `--text-primary` (dark) for all types, with a left-color strip for semantic color.
 
+### Setup Guide (Ollama not connected)
+
+Displayed in the side panel when Ollama is unreachable. Provides step-by-step
+installation and startup instructions so the extension never looks broken.
+
+- Status banner at top: `--error-surface` / `--error` for offline, `--warning-surface` / `--warning` for CORS.
+- Status dot: 8px circle matching the state color.
+- Hero text: centered, `--text-primary` heading (16px/500) + `--text-secondary` body.
+- Steps: numbered circles (24px, `--accent-surface` bg, `--accent` text), left-aligned with text.
+- Code blocks: `--surface-dim` bg, monospace font (`Roboto Mono`), 11px, 8px 12px padding, `--radius-sm+2` (6px) radius.
+- Retry button: full-width primary (`--accent`), turns `--success` on successful connection.
+- Footer note: secondary text with a link to the GitHub README (`#install-ollama`) for full setup details.
+
+### Action Bar Status Dot
+
+An 8px circle displayed inline in the floating action bar between the title and buttons.
+
+| State | Color | Ring |
+|---|---|---|
+| Checking | `#5f6368` | none |
+| Connected | `#81c995` | 2px `rgba(129,201,149,.3)` |
+| CORS warning | `#fdd663` | 2px `rgba(253,214,99,.3)` |
+| Disconnected | `#f28b82` | 2px `rgba(242,139,130,.3)` |
+
+### Popup Setup Banner
+
+Visible in the extension popup when Ollama is disconnected. Uses the dark-mode
+palette with numbered steps matching the quick-start pattern.
+
+- Card border: `--dm-border-subtle`.
+- Header: `--dm-error` title, `--dm-text-secondary` description.
+- Step circles: `rgba(242,139,130,.12)` bg, `--dm-error` text.
+- Links: `--dm-accent`.
+- Below the steps: README link (`#install-ollama`) in `--dm-text-secondary` with `--dm-accent` anchor.
+
 ### Extension Popup (Dark mode)
 
 The popup uses a dark theme that mirrors the floating action bar's palette.

@@ -111,6 +111,13 @@ function injectActionBar() {
   title.textContent = "AI Copilot";
   bar.appendChild(title);
 
+  // Ollama status dot (shown inline in the bar)
+  const statusDot = document.createElement("span");
+  statusDot.id = "aib-ollama-dot";
+  statusDot.className = "aib-status-dot aib-status-checking";
+  statusDot.title = "Checking Ollama connection...";
+  bar.appendChild(statusDot);
+
   buttons.forEach(btn => {
     const el = document.createElement("button");
     el.className = btn.action === "TRAIN_BRAIN" ? "aib-btn aib-btn-brain" : "aib-btn";
@@ -120,6 +127,36 @@ function injectActionBar() {
   });
 
   document.body.appendChild(bar);
+
+  // Run initial Ollama status check and keep polling
+  updateActionBarOllamaStatus();
+  setInterval(updateActionBarOllamaStatus, 10000);
+}
+
+/**
+ * Periodically check Ollama connectivity and update the status dot
+ * in the action bar so users can see at a glance whether Ollama is up.
+ */
+function updateActionBarOllamaStatus() {
+  if (!isExtensionContextValid()) return;
+
+  chrome.runtime.sendMessage({ action: "CHECK_OLLAMA" }, (response) => {
+    const dot = document.getElementById("aib-ollama-dot");
+    if (!dot) return;
+
+    dot.classList.remove("aib-status-checking", "aib-status-ok", "aib-status-warn", "aib-status-off");
+
+    if (response && response.connected) {
+      dot.classList.add("aib-status-ok");
+      dot.title = "Ollama connected";
+    } else if (response && response.error === "origins") {
+      dot.classList.add("aib-status-warn");
+      dot.title = "Ollama running but CORS is blocking — restart with: OLLAMA_ORIGINS=\"*\" ollama serve";
+    } else {
+      dot.classList.add("aib-status-off");
+      dot.title = "Ollama not connected — click any button for setup instructions";
+    }
+  });
 }
 
 function showActionBar(visible) {
@@ -153,11 +190,15 @@ async function handleButtonClick(action) {
     return;
   }
 
-  // Train Brain has its own flow
+  // Train Brain has its own flow (no Ollama call needed)
   if (action === "TRAIN_BRAIN") {
     handleTrainBrain();
     return;
   }
+
+  // Pre-check Ollama connectivity before any AI action
+  const ollamaReady = await checkOllamaBeforeAction();
+  if (!ollamaReady) return;
 
   showPanel(true);
   showPanelLoading("Expanding thread...");
@@ -217,6 +258,128 @@ async function handleButtonClick(action) {
     console.error("Error in handleButtonClick:", error);
     showPanelError("Error processing thread: " + error.message);
   }
+}
+
+/**
+ * Check Ollama connectivity before performing an AI action.
+ * Shows a rich setup guide panel if Ollama is not reachable.
+ * @returns {Promise<boolean>} true if Ollama is available
+ */
+async function checkOllamaBeforeAction() {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ action: "CHECK_OLLAMA" }, (response) => {
+      if (chrome.runtime.lastError) {
+        showPanel(true);
+        showSetupGuide("unable to reach background service");
+        resolve(false);
+        return;
+      }
+      if (response && response.connected) {
+        resolve(true);
+        return;
+      }
+      showPanel(true);
+      const reason = (response && response.error === "origins") ? "cors" : "offline";
+      showSetupGuide(reason);
+      resolve(false);
+    });
+  });
+}
+
+/**
+ * Render a full setup guide in the panel when Ollama is not reachable.
+ * Provides installation, startup, and model-pull instructions so the
+ * extension never looks "broken" to users (or CWS reviewers).
+ */
+function showSetupGuide(reason) {
+  const content = document.getElementById("ai-copilot-content");
+  if (!content) return;
+
+  const isCors = reason === "cors";
+  const statusMsg = isCors
+    ? "Ollama is running but blocking extension requests (CORS)."
+    : "Ollama is not running or not installed.";
+
+  content.innerHTML = `
+    <div class="ai-section">
+      <div class="ai-setup-status ${isCors ? "ai-setup-status-warn" : "ai-setup-status-offline"}">
+        <div class="ai-setup-status-dot"></div>
+        <span>${escapeHtml(statusMsg)}</span>
+      </div>
+
+      <div class="ai-setup-hero">
+        <h3>Setup required</h3>
+        <p>
+          AI Email Copilot requires <strong>Ollama</strong>, a free, open-source
+          local AI runtime, to analyse emails. All processing stays on your machine
+          — no data is sent to external servers.
+        </p>
+      </div>
+
+      <div class="ai-setup-steps">
+        <div class="ai-setup-step">
+          <div class="ai-setup-step-num">1</div>
+          <div>
+            <strong>Install Ollama</strong>
+            <p>Download from <a href="https://ollama.ai" target="_blank" rel="noopener">ollama.ai</a> (macOS, Linux, Windows).</p>
+          </div>
+        </div>
+        <div class="ai-setup-step">
+          <div class="ai-setup-step-num">2</div>
+          <div>
+            <strong>Pull the required models</strong>
+            <p>Open a terminal and run:</p>
+            <div class="ai-setup-code">ollama pull gemma3:4b<br>ollama pull llama3.1:8b</div>
+          </div>
+        </div>
+        <div class="ai-setup-step">
+          <div class="ai-setup-step-num">3</div>
+          <div>
+            <strong>Start Ollama with CORS enabled</strong>
+            <p>The extension needs cross-origin access:</p>
+            <div class="ai-setup-code">OLLAMA_ORIGINS="*" ollama serve</div>
+          </div>
+        </div>
+        <div class="ai-setup-step">
+          <div class="ai-setup-step-num">4</div>
+          <div>
+            <strong>Click any button in the action bar</strong>
+            <p>Return to this Gmail thread and use Summarise, Reply, Categorise, or Actions.</p>
+          </div>
+        </div>
+      </div>
+
+      <button id="ai-setup-retry" class="aib-btn aib-btn-primary ai-setup-retry-btn">
+        Check connection
+      </button>
+
+      <p class="ai-setup-footer-note">
+        Need help? Check the extension popup (click the extension icon) for connection status.
+        <a href="https://github.com/bhumijgupta/ai-email-copilot/blob/master/README.md#install-ollama" target="_blank" rel="noopener noreferrer">More in the README</a>
+        (install, models, CORS, troubleshooting).
+      </p>
+    </div>`;
+
+  content.querySelector("#ai-setup-retry").addEventListener("click", () => {
+    const btn = content.querySelector("#ai-setup-retry");
+    btn.textContent = "Checking...";
+    btn.disabled = true;
+    chrome.runtime.sendMessage({ action: "CHECK_OLLAMA" }, (response) => {
+      btn.disabled = false;
+      if (response && response.connected) {
+        btn.textContent = "Connected!";
+        btn.classList.add("ai-setup-retry-success");
+        showNotification("Ollama connected — you can now use AI features", "success");
+        setTimeout(() => showPanel(false), 1500);
+      } else {
+        btn.textContent = "Check connection";
+        const dot = content.querySelector(".ai-setup-status-dot");
+        if (dot) dot.style.animation = "ai-setup-shake .4s ease";
+        setTimeout(() => { if (dot) dot.style.animation = ""; }, 500);
+        showNotification("Still not connected. Follow the steps above.", "error");
+      }
+    });
+  });
 }
 
 // ─── Panel Rendering ──────────────────────────────────────────────
@@ -799,6 +962,20 @@ function injectStyles() {
     }
     .aib-btn-brain:hover { background: rgba(197,138,249,.15); color: #e8d0fe; }
 
+    /* ── Action bar Ollama status dot ─────────────── */
+    .aib-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-right: 4px;
+      transition: background .3s ease, box-shadow .3s ease;
+    }
+    .aib-status-checking { background: #5f6368; }
+    .aib-status-ok       { background: #81c995; box-shadow: 0 0 0 2px rgba(129,201,149,.3); }
+    .aib-status-warn     { background: #fdd663; box-shadow: 0 0 0 2px rgba(253,214,99,.3); }
+    .aib-status-off      { background: #f28b82; box-shadow: 0 0 0 2px rgba(242,139,130,.3); }
+
     .aib-btn-primary {
       background: #1a73e8;
       color: #fff;
@@ -1375,6 +1552,142 @@ function injectStyles() {
       font-size: 12px;
       margin-bottom: 10px;
       color: #5f6368;
+    }
+
+    /* ── Setup guide (Ollama not connected) ────────── */
+    .ai-setup-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+    .ai-setup-status-offline {
+      background: #fce8e6;
+      color: #d93025;
+    }
+    .ai-setup-status-warn {
+      background: #fef7e0;
+      color: #e37400;
+    }
+    .ai-setup-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .ai-setup-status-offline .ai-setup-status-dot { background: #d93025; }
+    .ai-setup-status-warn .ai-setup-status-dot { background: #e37400; }
+
+    .ai-setup-hero {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .ai-setup-hero h3 {
+      font-size: 16px;
+      font-weight: 500;
+      color: #202124;
+      margin: 0 0 8px;
+    }
+    .ai-setup-hero p {
+      font-size: 13px;
+      color: #5f6368;
+      line-height: 1.6;
+      margin: 0;
+    }
+    .ai-setup-hero a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    .ai-setup-hero a:hover { text-decoration: underline; }
+
+    .ai-setup-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .ai-setup-step {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .ai-setup-step-num {
+      width: 24px;
+      height: 24px;
+      background: #e8f0fe;
+      color: #1a73e8;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .ai-setup-step strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #202124;
+      margin-bottom: 2px;
+    }
+    .ai-setup-step p {
+      font-size: 12px;
+      color: #5f6368;
+      margin: 0;
+      line-height: 1.5;
+    }
+    .ai-setup-step a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    .ai-setup-step a:hover { text-decoration: underline; }
+    .ai-setup-code {
+      margin-top: 6px;
+      padding: 8px 12px;
+      background: #f1f3f4;
+      border-radius: 6px;
+      font-family: 'Roboto Mono', 'Courier New', monospace;
+      font-size: 11px;
+      color: #202124;
+      line-height: 1.7;
+      word-break: break-all;
+    }
+    .ai-setup-retry-btn {
+      width: 100%;
+      text-align: center;
+      padding: 10px !important;
+      font-size: 13px !important;
+      border-radius: 8px !important;
+      margin-bottom: 12px !important;
+    }
+    .ai-setup-retry-success {
+      background: #188038 !important;
+    }
+    .ai-setup-retry-success:hover {
+      background: #137333 !important;
+    }
+    .ai-setup-footer-note {
+      font-size: 11px;
+      color: #80868b;
+      text-align: center;
+      margin: 0;
+      line-height: 1.5;
+    }
+    .ai-setup-footer-note a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    .ai-setup-footer-note a:hover { text-decoration: underline; }
+    @keyframes ai-setup-shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
     }
   `;
 

@@ -18,13 +18,14 @@ function initialize() {
 }
 
 /**
- * Check Ollama connection status
+ * Check Ollama connection status and toggle the setup banner
  */
 function checkOllamaStatus() {
   chrome.runtime.sendMessage({ action: "CHECK_OLLAMA" }, (response) => {
     const dot = document.getElementById("status-dot");
     const text = document.getElementById("status-text");
     const hint = document.getElementById("status-hint");
+    const banner = document.getElementById("setup-banner");
 
     if (response && response.connected) {
       dot.classList.remove("disconnected", "warning");
@@ -32,6 +33,7 @@ function checkOllamaStatus() {
       text.textContent = "Connected";
       text.style.color = "#81c995";
       if (hint) hint.textContent = "";
+      if (banner) banner.style.display = "none";
     } else if (response && response.error === "origins") {
       dot.classList.remove("connected", "disconnected");
       dot.classList.add("warning");
@@ -42,12 +44,14 @@ function checkOllamaStatus() {
           'Ollama is running but blocking the extension.<br>' +
           'Restart with: <code>OLLAMA_ORIGINS="*" ollama serve</code>';
       }
+      if (banner) banner.style.display = "";
     } else {
       dot.classList.remove("connected", "warning");
       dot.classList.add("disconnected");
       text.textContent = "Disconnected";
       text.style.color = "#f28b82";
       if (hint) hint.textContent = "Run: ollama serve";
+      if (banner) banner.style.display = "";
     }
   });
 }

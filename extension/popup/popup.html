@@ -32,6 +32,26 @@
       </div>
     </div>
 
+    <!-- Setup banner (visible only when Ollama is disconnected) -->
+    <div id="setup-banner" class="popup-section" style="display:none">
+      <div class="popup-card setup-banner-card">
+        <div class="setup-banner-header">
+          <strong>Ollama is required</strong>
+          <p>This extension uses Ollama, a free local AI runtime, to analyse emails. No data leaves your machine.</p>
+        </div>
+        <ol class="setup-banner-steps">
+          <li>Download Ollama from <a href="https://ollama.ai" target="_blank" rel="noopener">ollama.ai</a></li>
+          <li>Open a terminal and run: <code>ollama pull gemma3:4b &amp;&amp; ollama pull llama3.1:8b</code></li>
+          <li>Start Ollama: <code>OLLAMA_ORIGINS="*" ollama serve</code></li>
+          <li>Return to Gmail and click any AI button</li>
+        </ol>
+        <p class="setup-banner-readme">
+          <a href="https://github.com/bhumijgupta/ai-email-copilot/blob/master/README.md#install-ollama" target="_blank" rel="noopener noreferrer">Full setup guide (README)</a>
+          — install, models, CORS, troubleshooting.
+        </p>
+      </div>
+    </div>
+
     <!-- Your Brain settings -->
     <div class="popup-section">
       <div class="popup-section-title">Your Brain</div>
@@ -108,7 +128,7 @@
 
     <!-- Footer -->
     <div class="popup-footer">
-      <p>v1.1.0 — All processing is local — No data sent to external APIs</p>
+      <p>v1.1.1 — All processing is local — No data sent to external APIs</p>
     </div>
 
   </div>
